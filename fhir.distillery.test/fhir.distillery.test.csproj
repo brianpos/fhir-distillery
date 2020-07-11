@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net472</TargetFramework>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
     <RootNamespace>fhir.distillery.test</RootNamespace>
     <UserSecretsId>33f1a79b-8e80-46ca-a738-80644dc988f2</UserSecretsId>
   </PropertyGroup>
