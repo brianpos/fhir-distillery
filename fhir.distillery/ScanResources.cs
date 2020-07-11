@@ -104,7 +104,7 @@ namespace fhir_distillery
                         {
                             System.Diagnostics.Trace.WriteLine($"  ---> Extension {ext.Url} exists");
                             // Check that this extension is defineed to support this
-                            UpdateStructureDefinitionForUsage(instSD, ext.Value.TypeName, context);
+                            UpdateExtensionStructureDefinitionForUsage(instSD, ext.Value.TypeName, context);
                         }
                     }
                 }
@@ -122,14 +122,34 @@ namespace fhir_distillery
             }
         }
 
-        private void UpdateStructureDefinitionForUsage(StructureDefinition instSD, string typeName, string context)
+        private void UpdateExtensionStructureDefinitionForUsage(StructureDefinition sd, string typeName, string context)
         {
             bool updated = false;
             // Check the context (and add it)
-            
+            if (!sd.Context.Any(uc => uc.Type == StructureDefinition.ExtensionContextType.Extension && uc.Expression == context))
+            {
+                // Need to include this context too
+                sd.Context.Add(new StructureDefinition.ContextComponent()
+                {
+                    Type = StructureDefinition.ExtensionContextType.Extension,
+                    Expression = context
+                });
+                updated = true;
+            }
+
             // Check the datatype
+            if (!sd.Differential.Element.Any(e => e.Path == "Extension.value[x]" && e.Type.Any(t => t.Code == typeName)))
+            {
+                sd.Differential.Element.FirstOrDefault(e => e.Path == "Extension.value[x]").Type.Add(new ElementDefinition.TypeRefComponent() 
+                {
+                    Code = typeName
+                });
+                updated = true;
+            }
 
             // Store the StructureDefinition
+            if (updated)
+                SaveStructureDefinition(sd);
         }
 
         private void DeriveExtensionFromUsage(string url, string typeName, string context)
@@ -180,7 +200,13 @@ namespace fhir_distillery
                 MustSupport = true
             });
 
+            SaveStructureDefinition(sd);
+        }
+
+        private void SaveStructureDefinition(StructureDefinition sd)
+        {
             // Ensure the folder exists
+            Uri t = new Uri(sd.Url);
             string profileOutputDirectory = Path.Combine(_outputProfilePath, t.Host);
             if (!Directory.Exists(profileOutputDirectory))
                 Directory.CreateDirectory(profileOutputDirectory);
@@ -188,11 +214,11 @@ namespace fhir_distillery
             System.IO.File.WriteAllText($"{profileOutputDirectory}/StructureDefinition-{sd.Id}.xml", new FhirXmlSerializer(new SerializerSettings() { AppendNewLine = true, Pretty = true }).SerializeToString(sd));
 
             // And add it to our resolver
-            sourceSD.InvalidateByCanonicalUri(url);
+            sourceSD.InvalidateByCanonicalUri(sd.Url);
             ds.Refresh();
 
             // And check that it comes back...
-            var instSD = sourceSD.ResolveByUri(url) as StructureDefinition;
+            var instSD = sourceSD.ResolveByUri(sd.Url) as StructureDefinition;
             if (instSD == null)
             {
                 Console.WriteLine($"Was not able to resolve the newly created extension");
