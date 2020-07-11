@@ -87,7 +87,14 @@ namespace fhir_distillery
             string context = string.IsNullOrEmpty(basePath) ? item.Name : basePath + "." + item.Name;
 
             // Check for extensions
-            if (item.ToPoco() is IExtendable extendable)
+            var iv = item as IFhirValueProvider;
+            if (iv.FhirValue is Extension)
+            {
+                // this is a child that is the extension itself...
+                // and not doing complex extensions just yet
+                return;
+            }
+            if (iv.FhirValue is IExtendable extendable)
             {
                 if (extendable.Extension != null)
                 {
@@ -98,13 +105,15 @@ namespace fhir_distillery
                         {
                             Console.WriteLine($"  x==> Extension {ext.Url} not found");
                             System.Diagnostics.Trace.WriteLine($"  x==> Extension {ext.Url} not found");
-                            DeriveExtensionFromUsage(ext.Url, ext.Value.TypeName, context);
+                            if (ext.Value != null)
+                                DeriveExtensionFromUsage(ext.Url, ext.Value.TypeName, context);
                         }
                         else
                         {
                             System.Diagnostics.Trace.WriteLine($"  ---> Extension {ext.Url} exists");
                             // Check that this extension is defineed to support this
-                            UpdateExtensionStructureDefinitionForUsage(instSD, ext.Value.TypeName, context);
+                            if (ext.Value != null)
+                                UpdateExtensionStructureDefinitionForUsage(instSD, ext.Value.TypeName, context);
                         }
                     }
                 }
@@ -114,7 +123,8 @@ namespace fhir_distillery
             {
                 foreach (var child in children)
                 {
-                    if (child.ToPoco() is Resource r)
+                    var fv = child as IFhirValueProvider;
+                    if (fv.FhirValue is Resource r)
                         ScanForExtensions(null, r.ToTypedElement());
                     else
                         ScanForExtensions(context, child);
@@ -210,6 +220,11 @@ namespace fhir_distillery
             string profileOutputDirectory = Path.Combine(_outputProfilePath, t.Host);
             if (!Directory.Exists(profileOutputDirectory))
                 Directory.CreateDirectory(profileOutputDirectory);
+
+            // Non extensions will just go in the root of the output
+            if (sd.BaseDefinition != "http://hl7.org/fhir/StructureDefinition/Extension")
+                profileOutputDirectory = _outputProfilePath;
+
             // Now output the file
             System.IO.File.WriteAllText($"{profileOutputDirectory}/StructureDefinition-{sd.Id}.xml", new FhirXmlSerializer(new SerializerSettings() { AppendNewLine = true, Pretty = true }).SerializeToString(sd));
 
