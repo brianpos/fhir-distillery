@@ -28,7 +28,7 @@ namespace fhir_distillery
         }
         private string _outputProfilePath;
         DirectorySource ds;
-        CachedResolver sourceSD;
+        public CachedResolver sourceSD;
         string _outputProfileBaseUri;
         string _publisher;
 
@@ -49,13 +49,13 @@ namespace fhir_distillery
                             if (entry != null)
                             {
                                 System.Diagnostics.Trace.WriteLine($"  -->{entry.ResourceType}/{entry.Id}");
-                                ScanForExtensions(null, entry.ToTypedElement());
+                                ScanForExtensions(null, entry.ToTypedElement(), null);
                             }
                         }
                     }
                     else
                     {
-                        ScanForExtensions(null, resource.ToTypedElement());
+                        ScanForExtensions(null, resource.ToTypedElement(), null);
                     }
                 }
                 catch (Exception ex)
@@ -71,6 +71,40 @@ namespace fhir_distillery
             // -- with observations - based on a common profile, then train it on a folder to learn what they should look like
         }
 
+        public StructureDefinition CreateProfileWithAllMinZero(string canonicalUri, string newBase)
+        {
+            var realSD = sourceSD.ResolveByCanonicalUri(canonicalUri) as StructureDefinition;
+            var newSD = realSD.DeepCopy() as StructureDefinition;
+            Uri t = new Uri(canonicalUri);
+            newSD.Url = $"{newBase}StructureDefinition/{t.Segments.Last()}";
+            newSD.Text = null;
+            newSD.Version = null;
+            newSD.Publisher = _publisher;
+            newSD.Status = PublicationStatus.Draft;
+            newSD.Contact = null;
+            newSD.Mapping.Clear();
+            newSD.Extension.Clear();
+            newSD.Snapshot = null;
+            newSD.BaseDefinition = canonicalUri;
+            newSD.Derivation = StructureDefinition.TypeDerivationRule.Constraint;
+            foreach (var e in newSD.Differential.Element)
+            {
+                e.Requirements = null;
+                e.IsSummary = null;
+                e.Comment = null;
+                e.IsModifier = null;
+                e.IsModifierReason = null;
+                e.Mapping.Clear();
+                e.Example.Clear();
+                if (e.Path != newSD.Type && (!e.Min.HasValue || e.Min == 0))
+                    e.Max = "0";
+                e.MustSupport = null;
+                e.Constraint.Clear();
+                e.Binding = null; // might want to put this back and "expand" the used concepts
+            }
+            return newSD;
+        }
+
         void ScanForTerminologyValues(Base item)
         {
             // create the valueset with all the USED values
@@ -82,9 +116,10 @@ namespace fhir_distillery
         }
 
 
-        public void ScanForExtensions(string basePath, ITypedElement item)
+        public void ScanForExtensions(string basePath, ITypedElement item, StructureDefinition sd)
         {
             string context = string.IsNullOrEmpty(basePath) ? item.Name : basePath + "." + item.Name;
+            bool customSD = false;
 
             // Check for extensions
             var iv = item as IFhirValueProvider;
@@ -93,6 +128,34 @@ namespace fhir_distillery
                 // this is a child that is the extension itself...
                 // and not doing complex extensions just yet
                 return;
+            }
+            if (iv.FhirValue is Resource r)
+            {
+                var canonicalUri = $"{_outputProfileBaseUri}StructureDefinition/{r.ResourceType.GetLiteral()}";
+                sd = sourceSD.ResolveByCanonicalUri(canonicalUri) as StructureDefinition;
+                if (sd == null)
+                {
+                    sd = CreateProfileWithAllMinZero($"http://hl7.org/fhir/StructureDefinition/{r.ResourceType.GetLiteral()}", _outputProfileBaseUri);
+                    customSD = true;
+                }
+            }
+            if (iv.FhirValue != null)
+            {
+                // Mark the property in the SD as in use, so not 0 anymore
+                var ed = sd?.Differential?.Element.FirstOrDefault(e => e.Path == context);
+                if (ed != null)
+                {
+                    ed.Max = null;
+                    customSD = true;
+                    int usage = ed.IncrementUsage();
+                    System.Diagnostics.Trace.WriteLine($"      {context} updated {usage}");
+                    if (usage == 1)
+                    {
+                        // Need to expand the datatype into the element table
+                    }
+                }
+                else
+                    System.Diagnostics.Trace.WriteLine($"      {context} not found");
             }
             if (iv.FhirValue is IExtendable extendable)
             {
@@ -115,6 +178,33 @@ namespace fhir_distillery
                             if (ext.Value != null)
                                 UpdateExtensionStructureDefinitionForUsage(instSD, ext.Value.TypeName, context);
                         }
+                        // Check that the extension is in the SD for this property
+                        var ed = sd.Differential.Element.FirstOrDefault(e => e.Path == context);
+                        if (ed != null)
+                        {
+                            // this is the position after which the extension needs to be added
+
+                            // check if it is already in there
+                            var edExts = sd.Differential.Element.Where(e => e.Path == context + ".extension");
+                            if (!edExts.Any())
+                            {
+                                // this is the position after which the extension needs to be added
+                                // check if it is already in there
+                            }
+                            Uri t = new Uri(ext.Url);
+                            var edExt = new ElementDefinition()
+                            {
+                                ElementId = $"{context}.extension:{t.Segments.Last()}",
+                                Path = context + ".extension",
+                                SliceName = t.Segments.Last()
+                            };
+                            edExt.Type.Add(new ElementDefinition.TypeRefComponent()
+                            {
+                                Code = "Extension",
+                                Profile = new[] { ext.Url }
+                            });
+                            sd.Differential.Element.Insert(sd.Differential.Element.IndexOf(ed) + 1, edExt);
+                        }
                     }
                 }
             }
@@ -124,12 +214,14 @@ namespace fhir_distillery
                 foreach (var child in children)
                 {
                     var fv = child as IFhirValueProvider;
-                    if (fv.FhirValue is Resource r)
-                        ScanForExtensions(null, r.ToTypedElement());
+                    if (fv.FhirValue is Resource rc)
+                        ScanForExtensions(null, rc.ToTypedElement(), null);
                     else
-                        ScanForExtensions(context, child);
+                        ScanForExtensions(context, child, sd);
                 }
             }
+            if (customSD)
+                SaveStructureDefinition(sd);
         }
 
         private void UpdateExtensionStructureDefinitionForUsage(StructureDefinition sd, string typeName, string context)
@@ -150,7 +242,7 @@ namespace fhir_distillery
             // Check the datatype
             if (!sd.Differential.Element.Any(e => e.Path == "Extension.value[x]" && e.Type.Any(t => t.Code == typeName)))
             {
-                sd.Differential.Element.FirstOrDefault(e => e.Path == "Extension.value[x]").Type.Add(new ElementDefinition.TypeRefComponent() 
+                sd.Differential.Element.FirstOrDefault(e => e.Path == "Extension.value[x]").Type.Add(new ElementDefinition.TypeRefComponent()
                 {
                     Code = typeName
                 });
@@ -213,7 +305,7 @@ namespace fhir_distillery
             SaveStructureDefinition(sd);
         }
 
-        private void SaveStructureDefinition(StructureDefinition sd)
+        public void SaveStructureDefinition(StructureDefinition sd)
         {
             // Ensure the folder exists
             Uri t = new Uri(sd.Url);
@@ -252,27 +344,28 @@ namespace fhir_distillery
             sd.Url = this._outputProfileBaseUri + $"StructureDefinition-{resource.TypeName}";
             // Check for extensions
         }
-
     }
+
     public class PropertyUsage
     {
         public int UsageCount { get; set; } = 0;
-        public void Increment() { UsageCount++; }
+        public int Increment() { UsageCount++; return UsageCount; }
     }
 
     public static class ED_ExtensionMethods
     {
-        public static void IncrementUsage(this ElementDefinition ed)
+        public static int IncrementUsage(this ElementDefinition ed)
         {
             if (ed == null)
-                return;
+                return 0;
             if (ed.HasAnnotation<PropertyUsage>())
             {
-                ed.Annotation<PropertyUsage>().Increment();
+                return ed.Annotation<PropertyUsage>().Increment();
             }
             else
             {
                 ed.SetAnnotation(new PropertyUsage() { UsageCount = 1 });
+                return 1;
             }
         }
     }

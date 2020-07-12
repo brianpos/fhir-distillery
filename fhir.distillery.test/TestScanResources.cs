@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using fhir.distillery.test;
+using fhir_distillery.Processors;
 using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Introspection;
 using Hl7.Fhir.Model;
@@ -40,6 +41,19 @@ namespace fhir_distillery
         }
 
         [TestMethod]
+        public void GenerateMinimumSD()
+        {
+            string sourcePath = Configuration.GetValue<string>("sourcePath");
+            string outputPath = Configuration.GetValue<string>("outputPath");
+            string canonicalBase = Configuration.GetValue<string>("defaults:baseurl");
+            string publisher = Configuration.GetValue<string>("defaults:publisher");
+            ScanResources processor = new ScanResources(sourcePath, outputPath,
+                                                canonicalBase, publisher);
+            var sd = processor.CreateProfileWithAllMinZero("http://hl7.org/fhir/StructureDefinition/Patient", canonicalBase);
+            processor.SaveStructureDefinition(sd);
+        }
+
+        [TestMethod]
         public void DiscoverExtensionsInFolderXml()
         {
             string sourcePath = Configuration.GetValue<string>("sourcePath");
@@ -63,13 +77,13 @@ namespace fhir_distillery
                             if (entry != null)
                             {
                                 System.Diagnostics.Trace.WriteLine($"  -->{entry.ResourceType}/{entry.Id}");
-                                processor.ScanForExtensions(null, entry.ToTypedElement());
+                                processor.ScanForExtensions(null, entry.ToTypedElement(), null);
                             }
                         }
                     }
                     else
                     {
-                        processor.ScanForExtensions(null, resource.ToTypedElement());
+                        processor.ScanForExtensions(null, resource.ToTypedElement(), null);
                     }
                 }
                 catch (Exception ex)
@@ -111,8 +125,8 @@ namespace fhir_distillery
                             if (entry != null)
                             {
                                 System.Diagnostics.Trace.WriteLine($"  -->{entry.ResourceType}/{entry.Id}");
-                                processor.ScanForExtensions(null, entry.ToTypedElement());
-                                createdResources ++;
+                                processor.ScanForExtensions(null, entry.ToTypedElement(), null);
+                                createdResources++;
                             }
                         }
                         if (batch.NextLink == null)
@@ -128,6 +142,21 @@ namespace fhir_distillery
             }
         }
 
+        [TestMethod]
+        public void TestElementCollection()
+        {
+            string sourcePath = Configuration.GetValue<string>("sourcePath");
+            string outputPath = Configuration.GetValue<string>("outputPath");
+            string canonicalBase = Configuration.GetValue<string>("defaults:baseurl");
+            string publisher = Configuration.GetValue<string>("defaults:publisher");
+            ScanResources processor = new ScanResources(sourcePath, outputPath,
+                                                canonicalBase, publisher);
+
+            var sd = processor.sourceSD.ResolveByCanonicalUri("http://hl7.org/fhir/StructureDefinition/Patient") as StructureDefinition;
+            Assert.AreEqual(28, sd.Differential.Element.Count());
+            ElementDefinitionCollection edc = new ElementDefinitionCollection(sd.Differential.Element.ToList());
+            Assert.AreEqual(28, edc.Elements.Count());
+        }
         void ScanNDJsonContent()
         {
 
