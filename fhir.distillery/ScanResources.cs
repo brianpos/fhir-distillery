@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using fhir_distillery.Processors;
 using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Introspection;
 using Hl7.Fhir.Model;
@@ -89,20 +90,25 @@ namespace fhir_distillery
             newSD.Derivation = StructureDefinition.TypeDerivationRule.Constraint;
             foreach (var e in newSD.Differential.Element)
             {
-                e.Requirements = null;
-                e.IsSummary = null;
-                e.Comment = null;
-                e.IsModifier = null;
-                e.IsModifierReason = null;
-                e.Mapping.Clear();
-                e.Example.Clear();
-                if (e.Path != newSD.Type && (!e.Min.HasValue || e.Min == 0))
-                    e.Max = "0";
-                e.MustSupport = null;
-                e.Constraint.Clear();
-                e.Binding = null; // might want to put this back and "expand" the used concepts
+                MinimizeElementCardinality(newSD, e);
             }
             return newSD;
+        }
+
+        public static void MinimizeElementCardinality(StructureDefinition newSD, ElementDefinition e)
+        {
+            e.Requirements = null;
+            e.IsSummary = null;
+            e.Comment = null;
+            e.IsModifier = null;
+            e.IsModifierReason = null;
+            e.Mapping.Clear();
+            e.Example.Clear();
+            if (e.Path != newSD.Type && (!e.Min.HasValue || e.Min == 0))
+                e.Max = "0";
+            e.MustSupport = null;
+            e.Constraint.Clear();
+            e.Binding = null; // might want to put this back and "expand" the used concepts
         }
 
         void ScanForTerminologyValues(Base item)
@@ -142,7 +148,7 @@ namespace fhir_distillery
             if (iv.FhirValue != null)
             {
                 // Mark the property in the SD as in use, so not 0 anymore
-                var ed = sd?.Differential?.Element.FirstOrDefault(e => e.Path == context);
+                var ed = sd?.Differential?.Element.FirstOrDefault(e => e.Path == context || e.Path == context+"[x]");
                 if (ed != null)
                 {
                     ed.Max = null;
@@ -155,7 +161,25 @@ namespace fhir_distillery
                     }
                 }
                 else
+                {
                     System.Diagnostics.Trace.WriteLine($"      {context} not found");
+                    ElementDefinitionCollection edc = new ElementDefinitionCollection(this.sourceSD, sd.Differential.Element.ToList());
+                    edc.IncludeElementFromBaseOrDatatype(context);
+                    sd.Differential.Element = edc.Elements.ToList(); // replace the re-processed element tree
+
+                    ed = sd?.Differential?.Element.FirstOrDefault(e => e.Path == context);
+                    if (ed != null)
+                    {
+                        ed.Max = null;
+                        customSD = true;
+                        int usage = ed.IncrementUsage();
+                        System.Diagnostics.Trace.WriteLine($"      {context} updated {usage}");
+                        if (usage == 1)
+                        {
+                            // Need to expand the datatype into the element table
+                        }
+                    }
+                }
             }
             if (iv.FhirValue is IExtendable extendable)
             {
@@ -192,18 +216,21 @@ namespace fhir_distillery
                                 // check if it is already in there
                             }
                             Uri t = new Uri(ext.Url);
-                            var edExt = new ElementDefinition()
+                            if (!edExts.Any(e => e.SliceName == t.Segments.Last()))
                             {
-                                ElementId = $"{context}.extension:{t.Segments.Last()}",
-                                Path = context + ".extension",
-                                SliceName = t.Segments.Last()
-                            };
-                            edExt.Type.Add(new ElementDefinition.TypeRefComponent()
-                            {
-                                Code = "Extension",
-                                Profile = new[] { ext.Url }
-                            });
-                            sd.Differential.Element.Insert(sd.Differential.Element.IndexOf(ed) + 1, edExt);
+                                var edExt = new ElementDefinition()
+                                {
+                                    ElementId = $"{context}.extension:{t.Segments.Last()}",
+                                    Path = context + ".extension",
+                                    SliceName = t.Segments.Last()
+                                };
+                                edExt.Type.Add(new ElementDefinition.TypeRefComponent()
+                                {
+                                    Code = "Extension",
+                                    Profile = new[] { ext.Url }
+                                });
+                                sd.Differential.Element.Insert(sd.Differential.Element.IndexOf(ed) + 1, edExt);
+                            }
                         }
                     }
                 }

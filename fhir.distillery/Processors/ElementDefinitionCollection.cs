@@ -1,4 +1,5 @@
 ﻿using Hl7.Fhir.Model;
+using Hl7.Fhir.Specification.Source;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -10,9 +11,11 @@ namespace fhir_distillery.Processors
     [System.Diagnostics.DebuggerDisplay(@"\{{DebuggerDisplay,nq}}")] // http://blogs.msdn.com/b/jaredpar/archive/2011/03/18/debuggerdisplay-attribute-best-practices.aspx
     public class ElementDefinitionCollection
     {
-        public ElementDefinitionCollection(List<ElementDefinition> elements)
+        IResourceResolver _resolver;
+        public ElementDefinitionCollection(IResourceResolver resolver, List<ElementDefinition> elements)
         {
             // This is the "root" of the StructureDefinition, so we need to grab the first element, then populate the children
+            _resolver = resolver;
             MyElementDefinition = elements.First();
 
             // Scan through the immediate children
@@ -30,7 +33,7 @@ namespace fhir_distillery.Processors
                 {
                     childsElements = elements.Skip(startIndex).ToList();
                 }
-                Children.Add(new ElementDefinitionCollection(childsElements));
+                Children.Add(new ElementDefinitionCollection(_resolver, childsElements));
             }
         }
 
@@ -54,10 +57,60 @@ namespace fhir_distillery.Processors
 
         private List<ElementDefinitionCollection> Children = new List<ElementDefinitionCollection>();
         private ElementDefinition MyElementDefinition;
-        public void ExpandChildren()
-        {
 
+        /// <summary>
+        /// Walk through the base definition or datatypes and include this path
+        /// </summary>
+        /// <param name="path"></param>
+        /// <returns></returns>
+        public bool IncludeElementFromBaseOrDatatype(string path)
+        {
+            if (path.StartsWith(MyElementDefinition.Path + "."))
+            {
+                string relativePath = path.Substring(MyElementDefinition.Path.Length + 1);
+                string immediateChildPath = $"{MyElementDefinition.Path}.{(relativePath.Contains(".") ? relativePath.Substring(0, relativePath.IndexOf(".")):relativePath)}";
+                // this comes from my part of the tree
+                foreach (var child in Children)
+                {
+                    if (child.MyElementDefinition.Path == immediateChildPath)
+                    {
+                        return child.IncludeElementFromBaseOrDatatype(path);
+                    }
+                }
+                // Path was not found
+                if (!MyElementDefinition.Path.Contains("."))
+                {
+                    // Reach into the base Definition to find it
+                    // var sd = this._resolver.ResolveByCanonicalUri(MyElementDefinition.Type);
+                    return false;
+                }
+                foreach (var t in MyElementDefinition.Type)
+                {
+                    if (t.Code == "BackboneElement")
+                        Debugger.Break();
+                    var sd = this._resolver.ResolveByCanonicalUri($"http://hl7.org/fhir/StructureDefinition/{t.Code}") as StructureDefinition;
+                    if (sd != null)
+                    {
+                        var dataTypeElements = (sd.DeepCopy() as StructureDefinition).Differential.Element.Skip(1);
+                        System.Diagnostics.Trace.WriteLine($"    Expanding elements for {t.Code}: {dataTypeElements.Count()} child properties {string.Join(",", dataTypeElements.Select(d => d.Path))}");
+                        foreach (var dte in dataTypeElements)
+                        {
+                            ScanResources.MinimizeElementCardinality(sd, dte);
+                            dte.ElementId = MyElementDefinition.ElementId + "." + dte.Path.Substring(dte.ElementId.IndexOf(".") + 1);
+                            dte.Path = MyElementDefinition.Path + "." + dte.Path.Substring(dte.Path.IndexOf(".")+1);
+                            List<ElementDefinition> ed = new List<ElementDefinition>();
+                            ed.Add(dte);
+                            Children.Add(new ElementDefinitionCollection(_resolver, ed));
+                        }
+                        return true;
+                    }
+                    return false;
+                }
+                return false;
+            }
+            return false;
         }
+
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private string DebuggerDisplay
         {
