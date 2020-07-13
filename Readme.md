@@ -1,5 +1,5 @@
 # FHIR-Distillery
-A simple tool for extracting FHIR StructureDefinitions based on examples provided.
+A simple tool for extracting HL7® FHIR® StructureDefinitions based on examples provided.
 
 Creating a FHIR Implementation Guide can seem like hard work, and often development and release timelines 
 get in the way of good practice, so this tool comes in handy to help pad out the extensions that you forgot
@@ -12,3 +12,7 @@ Specifically it will:
 
 The current project is a library that does the work, and a unit test that processes some local folders, or searching a live server.
 In the future will probably adapt it to work on NDJSON files and live servers.
+
+## Licensing
+HL7®, FHIR® and the FHIR Mark® are trademarks owned by Health Level Seven International, 
+registered with the United States Patent and Trademark Office.
