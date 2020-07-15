@@ -1,4 +1,4 @@
-Copyright (c) 2013-2019, HL7, Firely (info@fire.ly), Microsoft Open Technologies 
+Copyright (c) 2020, Brian Postlethwaite, Microsoft Open Technologies 
 and contributors. See the file CONTRIBUTORS for details
 
 All rights reserved.
