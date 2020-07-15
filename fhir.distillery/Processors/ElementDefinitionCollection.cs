@@ -111,6 +111,38 @@ namespace fhir_distillery.Processors
             return false;
         }
 
+        public bool HasMustSupport()
+        {
+            if (MyElementDefinition.MustSupport == true)
+                return true;
+            foreach(var child in Children)
+            {
+                if (child.HasMustSupport())
+                    return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Scans itself and children to update mustsupport flags if a child had it set
+        /// </summary>
+        /// <returns>true if there was a must support flag that was changed</returns>
+        public bool FixMustSupport()
+        {
+            bool sdUpdateRequired = false;
+            if (MyElementDefinition.MustSupport != true && HasMustSupport())
+            {
+                MyElementDefinition.MustSupport = true;
+                sdUpdateRequired = true;
+            }
+            foreach (var child in Children)
+            {
+                if (child.FixMustSupport())
+                    return sdUpdateRequired = true;
+            }
+            return sdUpdateRequired;
+        }
+
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private string DebuggerDisplay
         {
