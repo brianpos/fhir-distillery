@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using fhir_distillery.Processors;
 using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Introspection;
@@ -172,6 +173,7 @@ namespace fhir_distillery
                     {
                         ed.Max = null;
                         customSD = true;
+                        ed.MustSupport = true;
                         int usage = ed.IncrementUsage();
                         System.Diagnostics.Trace.WriteLine($"      {context} updated {usage}");
                         if (usage == 1)
@@ -275,10 +277,29 @@ namespace fhir_distillery
                 });
                 updated = true;
             }
-
             // Store the StructureDefinition
             if (updated)
                 SaveStructureDefinition(sd);
+        }
+
+        static string PascalCase(string s)
+        {
+            if (string.IsNullOrEmpty(s))
+                return null;
+            return string.Join("", s.Split(new char[] { '_', ' ', '-', '.' })
+                             .Select(w => w.Trim())
+                             .Where(w => w.Length > 0)
+                             .Select(w => w.Substring(0, 1).ToUpper() + w.Substring(1).ToLower()));
+        }
+
+        static string PascalCaseWithSpaces(string s)
+        {
+            if (string.IsNullOrEmpty(s))
+                return null;
+            return string.Join(" ", s.Split(new char[] { '_', ' ', '-', '.' })
+                             .Select(w => w.Trim())
+                             .Where(w => w.Length > 0)
+                             .Select(w => w.Substring(0, 1).ToUpper() + w.Substring(1).ToLower()));
         }
 
         private void DeriveExtensionFromUsage(string url, string typeName, string context)
@@ -288,9 +309,10 @@ namespace fhir_distillery
                 Url = url,
                 Publisher = _publisher,
                 Status = PublicationStatus.Draft,
-                FhirVersion = FHIRVersion.N0_4_0,
+                // FhirVersion = FHIRVersion.N0_4_0,
                 Kind = StructureDefinition.StructureDefinitionKind.ComplexType,
                 Abstract = false,
+                Type = "Extension",
                 BaseDefinition = "http://hl7.org/fhir/StructureDefinition/Extension",
                 Derivation = StructureDefinition.TypeDerivationRule.Constraint
             };
@@ -303,6 +325,8 @@ namespace fhir_distillery
             // Derive a resource ID from the extension URL
             Uri t = new Uri(url);
             sd.Id = t.Segments.Last();
+            sd.Name = PascalCase(sd.Id);
+            sd.Title = PascalCaseWithSpaces(sd.Id);
 
 
             // Add in the Extension element definitions
@@ -369,6 +393,7 @@ namespace fhir_distillery
             }
             var sd = instSD.DeepCopy() as StructureDefinition;
             sd.Url = this._outputProfileBaseUri + $"StructureDefinition-{resource.TypeName}";
+            sd.FhirVersion = null;
             // Check for extensions
         }
     }
