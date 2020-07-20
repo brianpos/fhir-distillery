@@ -153,6 +153,7 @@ namespace fhir_distillery
                 if (ed != null)
                 {
                     ed.Max = null;
+                    ed.MustSupport = true;
                     customSD = true;
                     int usage = ed.IncrementUsage();
                     System.Diagnostics.Trace.WriteLine($"      {context} updated {usage}");
@@ -224,7 +225,8 @@ namespace fhir_distillery
                                 {
                                     ElementId = $"{context}.extension:{t.Segments.Last()}",
                                     Path = context + ".extension",
-                                    SliceName = t.Segments.Last()
+                                    SliceName = t.Segments.Last(),
+                                    MustSupport = true
                                 };
                                 edExt.Type.Add(new ElementDefinition.TypeRefComponent()
                                 {
@@ -257,12 +259,12 @@ namespace fhir_distillery
         {
             bool updated = false;
             // Check the context (and add it)
-            if (!sd.Context.Any(uc => uc.Type == StructureDefinition.ExtensionContextType.Extension && uc.Expression == context))
+            if (!sd.Context.Any(uc => uc.Type == StructureDefinition.ExtensionContextType.Fhirpath && uc.Expression == context))
             {
                 // Need to include this context too
                 sd.Context.Add(new StructureDefinition.ContextComponent()
                 {
-                    Type = StructureDefinition.ExtensionContextType.Extension,
+                    Type = StructureDefinition.ExtensionContextType.Fhirpath,
                     Expression = context
                 });
                 updated = true;
@@ -340,7 +342,7 @@ namespace fhir_distillery
             {
                 ElementId = "Extension.url",
                 Path = "Extension.url",
-                Fixed = new FhirUrl(url) // This is really not required anymore
+                Fixed = new FhirUri(url) // This is really not required anymore
             });
             sd.Differential.Element.Add(new ElementDefinition()
             {
