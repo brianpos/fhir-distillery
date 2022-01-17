@@ -50,7 +50,8 @@ namespace fhir_distillery
             ScanResources processor = new ScanResources(sourcePath, outputPath,
                                                 canonicalBase, publisher);
             var sd = processor.CreateProfileWithAllMinZero("http://hl7.org/fhir/StructureDefinition/Patient", canonicalBase);
-            processor.SaveStructureDefinition(sd);
+            DebugDumpOutputXml(sd);
+            // processor.SaveStructureDefinition(sd);
         }
 
         [TestMethod]
@@ -69,14 +70,14 @@ namespace fhir_distillery
                 try
                 {
                     var resource = new FhirXmlParser().Parse<Resource>(File.ReadAllText(file));
-                    System.Diagnostics.Trace.WriteLine($"{file} {resource.ResourceType}/{resource.Id}");
+                    System.Diagnostics.Trace.WriteLine($"{file} {resource.TypeName}/{resource.Id}");
                     if (resource is Bundle bundle)
                     {
                         foreach (var entry in bundle.Entry.Select(e => e.Resource))
                         {
                             if (entry != null)
                             {
-                                System.Diagnostics.Trace.WriteLine($"  -->{entry.ResourceType}/{entry.Id}");
+                                System.Diagnostics.Trace.WriteLine($"  -->{entry.TypeName}/{entry.Id}");
                                 processor.ScanForExtensions(null, entry.ToTypedElement(), null);
                             }
                         }
@@ -110,7 +111,7 @@ namespace fhir_distillery
                                                 canonicalBase, publisher);
 
             var settings = Configuration.GetSection("scanserver").Get<ScanServerSettings>();
-            var server = new FhirClient(settings.baseurl, false);
+            var server = new FhirClient(settings.baseurl, new FhirClientSettings() { VerifyFhirVersion = false });
 
             int createdResources = 0;
             foreach (var query in settings.queries)
@@ -124,12 +125,12 @@ namespace fhir_distillery
                         {
                             if (entry != null)
                             {
-                                System.Diagnostics.Trace.WriteLine($"  -->{entry.ResourceType}/{entry.Id}");
+                                System.Diagnostics.Trace.WriteLine($"  -->{entry.TypeName}/{entry.Id}");
                                 processor.ScanForExtensions(null, entry.ToTypedElement(), null);
                                 createdResources++;
                             }
                         }
-                        if (batch.NextLink == null)
+                        // if (batch.NextLink == null)
                             break;
                         batch = server.Continue(batch);
                     }

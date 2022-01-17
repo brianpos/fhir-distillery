@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using fhir_distillery.Processors;
 using Hl7.Fhir.ElementModel;
@@ -43,14 +45,14 @@ namespace fhir_distillery
                 try
                 {
                     var resource = new FhirXmlParser().Parse<Resource>(File.ReadAllText(file));
-                    System.Diagnostics.Trace.WriteLine($"{file} {resource.ResourceType}/{resource.Id}");
+                    System.Diagnostics.Trace.WriteLine($"{file} {resource.TypeName}/{resource.Id}");
                     if (resource is Bundle bundle)
                     {
                         foreach (var entry in bundle.Entry.Select(e => e.Resource))
                         {
                             if (entry != null)
                             {
-                                System.Diagnostics.Trace.WriteLine($"  -->{entry.ResourceType}/{entry.Id}");
+                                System.Diagnostics.Trace.WriteLine($"  -->{entry.TypeName}/{entry.Id}");
                                 ScanForExtensions(null, entry.ToTypedElement(), null);
                             }
                         }
@@ -138,18 +140,18 @@ namespace fhir_distillery
             }
             if (iv.FhirValue is Resource r)
             {
-                var canonicalUri = $"{_outputProfileBaseUri}StructureDefinition/{r.ResourceType.GetLiteral()}";
+                var canonicalUri = $"{_outputProfileBaseUri}StructureDefinition/{r.TypeName}";
                 sd = sourceSD.ResolveByCanonicalUri(canonicalUri) as StructureDefinition;
                 if (sd == null)
                 {
-                    sd = CreateProfileWithAllMinZero($"http://hl7.org/fhir/StructureDefinition/{r.ResourceType.GetLiteral()}", _outputProfileBaseUri);
+                    sd = CreateProfileWithAllMinZero($"http://hl7.org/fhir/StructureDefinition/{r.TypeName}", _outputProfileBaseUri);
                     customSD = true;
                 }
             }
             if (iv.FhirValue != null)
             {
                 // Mark the property in the SD as in use, so not 0 anymore
-                var ed = sd?.Differential?.Element.FirstOrDefault(e => e.Path == context || e.Path == context+"[x]");
+                var ed = sd?.Differential?.Element.FirstOrDefault(e => e.Path == context || e.Path == context + "[x]");
                 if (ed != null)
                 {
                     ed.Max = null;

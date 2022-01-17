@@ -1,12 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <RootNamespace>fhir_distillery</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Hl7.Fhir.Specification.R4" Version="1.8.0" />
+    <PackageReference Include="Hl7.Fhir.Specification.R4" Version="3.8.0" />
   </ItemGroup>
 
 
