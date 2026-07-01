@@ -261,7 +261,7 @@ top‑level keys in the JSON settings file.
 | Property | CLI alias | Type | Purpose |
 | --- | --- | --- | --- |
 | `AssemblyPaths` | `-a` / `--assembly` | `List<string>` | One or more compiled assemblies (`.dll`) to reflect over. |
-| `TypeNames` | `-t` / `--type` | `List<string>` | Explicit list of types to output; empty = discover all `[FhirType]` types. |
+| `TypeNames` | `-t` / `--type` | `List<string>` | Type name patterns to output (wildcards supported, §7.3); empty = discover all `[FhirType]` types. |
 | `IncludeNamespaces` / `ExcludeNamespaces` | `--include` / `--exclude` | `List<string>` | Namespace filters applied during type discovery. |
 | `DocumentationXmlPath` | `--docXml` | `string` | Override location of the `*.xml` doc file (§4); default is the sibling of each DLL. |
 | `OutputPath` | `-o` / `--outputPath` | `string` | Folder for the generated `*.StructureDefinition.json` (reuses the existing property). |
@@ -270,7 +270,7 @@ top‑level keys in the JSON settings file.
 | `Status` | `--status` | `string` | `StructureDefinition.status` default (e.g. `draft`). |
 | `Version` | `--version` | `string` | `StructureDefinition.version` default. |
 | `FhirVersion` | `--fhirVersion` | `string` | Target FHIR release; defaults to **R4** (§8). |
-| `SettingsFile` | `-c` / `--config` | `string` | Path to the JSON settings file described below. |
+| `SettingsFile` | `-c` / `--config` | `string` | Path to the JSON settings file described below. **Command‑line only** — it must not appear inside the JSON file itself (§7.2). |
 | `Verbose` | `--verbose` | `bool` | Verbose diagnostics (reuses the existing property). |
 
 Properties that already exist on the shared `Settings` class (`OutputPath`, `BaseUrl`,
@@ -338,9 +338,48 @@ The `defaults`/`overrides` keys are intentionally shaped after `StructureDefinit
 without a new bespoke vocabulary. Unknown keys are surfaced as warnings (in `--verbose`) rather
 than failing the run, so the file degrades gracefully as the model evolves.
 
-Selection of *which* classes to output can come from `TypeNames` / the `overrides` keys, and/or
-discovery of types carrying `[FhirType]` (optionally scoped by `IncludeNamespaces` /
-`ExcludeNamespaces` and the `[FhirModelAssembly]` marker).
+> **`SettingsFile` cannot appear inside the settings file.** The `SettingsFile` / `--config`
+> option only makes sense on the command line — it names *this* file. If it is present as a
+> top‑level key inside the JSON it is ignored (with a `--verbose` warning); the tool never
+> chains to a second settings file. This is obvious once stated but easy to miss when copying a
+> command line into the file.
+
+**The settings file is written back after a run.** When a settings file is supplied, the tool
+re‑saves it after generation, adding a stub `overrides` entry for every type it just produced
+(keyed by the resolved type name, with the generated model‑level fields and an empty/partial
+`elements` map as a starting point). This makes the very common "scan, then hand‑refine the new
+classes" loop easy: run once, open the updated file, and fill in the overrides for the
+newly‑scanned types rather than hand‑authoring each key from scratch. Existing user‑authored
+overrides are preserved (merged, not overwritten); only missing entries are added, and the round
+trip stays diff‑friendly (stable key ordering, existing formatting/comments preserved as far as
+the JSON writer allows). A `--no-write-back` flag can opt out for read‑only/CI runs.
+
+### 7.3 Wildcards in `TypeNames`
+
+`TypeNames` entries may be **patterns**, not just exact type names, so a whole namespace or a
+naming convention can be selected in one line (e.g. `MyOrg.Models.*` or `*Dto`). Recommendation:
+
+- **Default to simple glob‑style `*` / `?` matching**, matched against the type's full name
+  (namespace + name). `*` = any run of characters, `?` = a single character. This covers the
+  overwhelmingly common cases (`MyOrg.Models.*`, `*Record`, `MyOrg.*.Patient`) and is what users
+  intuitively expect from a `--type` filter — it reads like a file glob, needs no escaping of
+  `.`, and is trivial to implement (translate the glob to an anchored `Regex`, escaping regex
+  metacharacters and mapping `*`→`.*`, `?`→`.`).
+- **Offer regex only as an explicit opt‑in**, e.g. a `regex:` prefix on an individual entry
+  (`"regex:^MyOrg\\.Models\\.(Patient|Coverage)$"`). Full regex is occasionally useful
+  (alternation, anchoring, character classes) but is overkill as the default: `.` is a literal in
+  type names yet a metacharacter in regex, which makes plain regex surprising and error‑prone for
+  this use.
+
+So: glob (`*`) by default for readability and least surprise, with a `regex:` escape hatch for
+the rare case that needs it. Patterns are unioned with any exact names, then intersected with the
+`IncludeNamespaces` / `ExcludeNamespaces` filters and `[FhirType]` discovery. If a pattern matches
+no types, emit a warning (a likely typo) rather than failing.
+
+Selection of *which* classes to output can come from `TypeNames` (exact names or wildcard
+patterns, §7.3) / the `overrides` keys, and/or discovery of types carrying `[FhirType]`
+(optionally scoped by `IncludeNamespaces` / `ExcludeNamespaces` and the `[FhirModelAssembly]`
+marker).
 
 ## 8. Target FHIR release
 
