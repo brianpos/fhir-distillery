@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.CommandLine;
+using System.CommandLine.NamingConventionBinder;
 using System.IO;
 using System.Linq;
-using fhir.distillery.test;
 using fhir_distillery.Processors;
 using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Introspection;
@@ -10,7 +12,6 @@ using Hl7.Fhir.Rest;
 using Hl7.Fhir.Serialization;
 using Hl7.Fhir.Specification.Source;
 using Hl7.Fhir.Utility;
-using Microsoft.Extensions.Configuration;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace fhir_distillery
@@ -18,15 +19,38 @@ namespace fhir_distillery
     [TestClass]
     public class TestScanResources
     {
-        static IConfiguration Configuration;
-        [ClassInitialize]
-        public static void TestInitialize(TestContext context)
+        /// <summary>
+        /// The default command line arguments used by the tests, pointing at the
+        /// local test data and output folders.
+        /// </summary>
+        static string[] DefaultArgs => new[]
         {
-            var builder = new ConfigurationBuilder()
-               .SetBasePath(new FileInfo(typeof(TestScanResources).Assembly.Location).DirectoryName)
-               .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
-            Configuration = builder.Build();
+            "--sourcePath", "../../../OutputResources",
+            "--outputPath", "OutputResources",
+            "--baseUrl", "http://fhir.example.org/",
+            "--publisher", "My Organization",
+            "--scanFolder", "../../../TestData",
+        };
+
+        /// <summary>
+        /// Parse a set of command line arguments into a <see cref="Settings"/> instance
+        /// using the same root command as the console tool.
+        /// </summary>
+        public static Settings ParseArguments(string[] args)
+        {
+            Settings settings = null;
+            RootCommand rootCommand = Program.GetRootCommand(args);
+            rootCommand.Handler = CommandHandler.Create((Settings context) =>
+            {
+                settings = context;
+                return 0;
+            });
+            rootCommand.Invoke(args);
+            return settings;
         }
+
+        static Settings TestSettings() => ParseArguments(DefaultArgs);
+
         public static void DebugDumpOutputXml(Base fragment)
         {
             if (fragment == null)
@@ -41,15 +65,53 @@ namespace fhir_distillery
         }
 
         [TestMethod]
+        public void TestConfigurationParameters()
+        {
+            var settings = ParseArguments(new[]
+            {
+                "-s", "SourceResources",
+                "-o", "GeneratedResources",
+                "-b", "http://example.org/fhir/",
+                "-p", "Contoso",
+                "-su", "https://fhir.forms-lab.com/",
+                "-q", "Questionnaire?_count=10",
+                "-q", "Practitioner",
+                "--verbose",
+            });
+
+            Assert.IsNotNull(settings);
+            Assert.AreEqual("SourceResources", settings.SourcePath);
+            Assert.AreEqual("GeneratedResources", settings.OutputPath);
+            Assert.AreEqual("http://example.org/fhir/", settings.BaseUrl);
+            Assert.AreEqual("Contoso", settings.Publisher);
+            Assert.AreEqual("https://fhir.forms-lab.com/", settings.ServerUrl);
+            Assert.IsNotNull(settings.Queries);
+            Assert.AreEqual(2, settings.Queries.Count);
+            Assert.AreEqual("Questionnaire?_count=10", settings.Queries[0]);
+            Assert.AreEqual("Practitioner", settings.Queries[1]);
+            Assert.IsTrue(settings.Verbose);
+        }
+
+        [TestMethod]
+        public void TestConfigurationParameterDefaults()
+        {
+            // Only provide the mandatory scanFolder, everything else should fall back to defaults
+            var settings = ParseArguments(new[] { "--scanFolder", "../../../TestData" });
+
+            Assert.IsNotNull(settings);
+            Assert.AreEqual("../../../TestData", settings.ScanFolder);
+            Assert.AreEqual("OutputResources", settings.OutputPath);
+            Assert.IsFalse(settings.Verbose);
+            Assert.IsNull(settings.ServerUrl);
+        }
+
+        [TestMethod]
         public void GenerateMinimumSD()
         {
-            string sourcePath = Configuration.GetValue<string>("sourcePath");
-            string outputPath = Configuration.GetValue<string>("outputPath", "OutputResources");
-            string canonicalBase = Configuration.GetValue<string>("defaults:baseurl");
-            string publisher = Configuration.GetValue<string>("defaults:publisher");
-            ScanResources processor = new ScanResources(sourcePath, outputPath,
-                                                canonicalBase, publisher);
-            var sd = processor.CreateProfileWithAllMinZero("http://hl7.org/fhir/StructureDefinition/Patient", canonicalBase);
+            var settings = TestSettings();
+            ScanResources processor = new ScanResources(settings.SourcePath, settings.OutputPath,
+                                                settings.BaseUrl, settings.Publisher);
+            var sd = processor.CreateProfileWithAllMinZero("http://hl7.org/fhir/StructureDefinition/Patient", settings.BaseUrl);
             DebugDumpOutputXml(sd);
             // processor.SaveStructureDefinition(sd);
         }
@@ -57,40 +119,11 @@ namespace fhir_distillery
         [TestMethod]
         public void DiscoverExtensionsInFolder()
         {
-            string sourcePath = Configuration.GetValue<string>("sourcePath");
-            string outputPath = Configuration.GetValue<string>("outputPath", "OutputResources");
-            string canonicalBase = Configuration.GetValue<string>("defaults:baseurl");
-            string publisher = Configuration.GetValue<string>("defaults:publisher");
-            ScanResources processor = new ScanResources(sourcePath, outputPath,
-                                                canonicalBase, publisher);
+            var settings = TestSettings();
+            ScanResources processor = new ScanResources(settings.SourcePath, settings.OutputPath,
+                                                settings.BaseUrl, settings.Publisher);
 
-            string exampleResourcesPath = Configuration.GetValue<string>("scanExamplesInPath");
-            foreach (string file in Directory.EnumerateFiles(exampleResourcesPath, "*.xml", SearchOption.AllDirectories))
-            {
-                try
-                {
-                    var resource = new FhirXmlParser().Parse<Resource>(File.ReadAllText(file));
-                    DiscoverInFile(processor, file, resource);
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Trace.WriteLine($"{file}");
-                    System.Diagnostics.Trace.WriteLine($"  ==> Exception {ex.Message}");
-                }
-            }
-            foreach (string file in Directory.EnumerateFiles(exampleResourcesPath, "*.json", SearchOption.AllDirectories))
-            {
-                try
-                {
-                    var resource = new FhirJsonParser().Parse<Resource>(File.ReadAllText(file));
-                    DiscoverInFile(processor, file, resource);
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Trace.WriteLine($"{file}");
-                    System.Diagnostics.Trace.WriteLine($"  ==> Exception {ex.Message}");
-                }
-            }
+            Program.ScanFolder(processor, settings.ScanFolder, settings.Verbose);
 
             // Next pass was to update the type profile - including the generated extensions.
             // - while merging the profile
@@ -98,78 +131,30 @@ namespace fhir_distillery
             // -- with observations - based on a common profile, then train it on a folder to learn what they should look like
         }
 
-        private static void DiscoverInFile(ScanResources processor, string file, Resource resource)
-        {
-            System.Diagnostics.Trace.WriteLine($"{file} {resource.TypeName}/{resource.Id}");
-            if (resource is Bundle bundle)
-            {
-                foreach (var entry in bundle.Entry.Select(e => e.Resource))
-                {
-                    if (entry != null)
-                    {
-                        System.Diagnostics.Trace.WriteLine($"  -->{entry.TypeName}/{entry.Id}");
-                        processor.ScanForExtensions(null, entry.ToTypedElement(), null);
-                    }
-                }
-            }
-            else
-            {
-                processor.ScanForExtensions(null, resource.ToTypedElement(), null);
-            }
-        }
-
         [TestMethod, Ignore]
         public void DiscoverExtensionsOnFhirServer()
         {
-            string sourcePath = Configuration.GetValue<string>("sourcePath");
-            string outputPath = Configuration.GetValue<string>("outputPath", "OutputResources");
-            string canonicalBase = Configuration.GetValue<string>("defaults:baseurl");
-            string publisher = Configuration.GetValue<string>("defaults:publisher");
-            ScanResources processor = new ScanResources(sourcePath, outputPath,
-                                                canonicalBase, publisher);
-
-            var settings = Configuration.GetSection("scanserver").Get<ScanServerSettings>();
-            var server = new FhirClient(settings.baseurl, new FhirClientSettings() { VerifyFhirVersion = false });
-
-            int createdResources = 0;
-            foreach (var query in settings.queries)
+            var settings = ParseArguments(new[]
             {
-                try
-                {
-                    Bundle batch = server.Get(server.Endpoint + query) as Bundle;
-                    do
-                    {
-                        foreach (var entry in batch.Entry.Select(e => e.Resource))
-                        {
-                            if (entry != null)
-                            {
-                                System.Diagnostics.Trace.WriteLine($"  -->{entry.TypeName}/{entry.Id}");
-                                processor.ScanForExtensions(null, entry.ToTypedElement(), null);
-                                createdResources++;
-                            }
-                        }
-                        // if (batch.NextLink == null)
-                            break;
-                        batch = server.Continue(batch);
-                    }
-                    while (true);
-                }
-                catch (FhirOperationException ex)
-                {
-                    DebugDumpOutputXml(ex.Outcome);
-                }
-            }
+                "--sourcePath", "../../../OutputResources",
+                "--outputPath", "OutputResources",
+                "--baseUrl", "http://fhir.example.org/",
+                "--publisher", "My Organization",
+                "--serverUrl", "https://fhir.forms-lab.com/",
+                "-q", "Questionnaire?_count=10",
+            });
+            ScanResources processor = new ScanResources(settings.SourcePath, settings.OutputPath,
+                                                settings.BaseUrl, settings.Publisher);
+
+            Program.ScanServer(processor, settings);
         }
 
         [TestMethod]
         public void TestElementCollection()
         {
-            string sourcePath = Configuration.GetValue<string>("sourcePath");
-            string outputPath = Configuration.GetValue<string>("outputPath", "OutputResources");
-            string canonicalBase = Configuration.GetValue<string>("defaults:baseurl");
-            string publisher = Configuration.GetValue<string>("defaults:publisher");
-            ScanResources processor = new ScanResources(sourcePath, outputPath,
-                                                canonicalBase, publisher);
+            var settings = TestSettings();
+            ScanResources processor = new ScanResources(settings.SourcePath, settings.OutputPath,
+                                                settings.BaseUrl, settings.Publisher);
 
             var sd = processor.sourceSD.ResolveByCanonicalUri("http://hl7.org/fhir/StructureDefinition/Patient") as StructureDefinition;
             Assert.AreEqual(28, sd.Differential.Element.Count());
@@ -180,12 +165,9 @@ namespace fhir_distillery
         [TestMethod]
         public void TestElementUsePropertyFromBase()
         {
-            string sourcePath = Configuration.GetValue<string>("sourcePath");
-            string outputPath = Configuration.GetValue<string>("outputPath", "OutputResources");
-            string canonicalBase = Configuration.GetValue<string>("defaults:baseurl");
-            string publisher = Configuration.GetValue<string>("defaults:publisher");
-            ScanResources processor = new ScanResources(sourcePath, outputPath,
-                                                canonicalBase, publisher);
+            var settings = TestSettings();
+            ScanResources processor = new ScanResources(settings.SourcePath, settings.OutputPath,
+                                                settings.BaseUrl, settings.Publisher);
 
             var sd = processor.sourceSD.ResolveByCanonicalUri("http://hl7.org/fhir/StructureDefinition/Patient") as StructureDefinition;
             Assert.AreEqual(28, sd.Differential.Element.Count());
@@ -200,12 +182,9 @@ namespace fhir_distillery
         [TestMethod]
         public void TestElementUsePropertyFromBackbone()
         {
-            string sourcePath = Configuration.GetValue<string>("sourcePath");
-            string outputPath = Configuration.GetValue<string>("outputPath", "OutputResources");
-            string canonicalBase = Configuration.GetValue<string>("defaults:baseurl");
-            string publisher = Configuration.GetValue<string>("defaults:publisher");
-            ScanResources processor = new ScanResources(sourcePath, outputPath,
-                                                canonicalBase, publisher);
+            var settings = TestSettings();
+            ScanResources processor = new ScanResources(settings.SourcePath, settings.OutputPath,
+                                                settings.BaseUrl, settings.Publisher);
 
             var sd = processor.sourceSD.ResolveByCanonicalUri("http://hl7.org/fhir/StructureDefinition/Questionnaire") as StructureDefinition;
             Assert.AreEqual(45, sd.Differential.Element.Count());
