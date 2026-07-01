@@ -11,6 +11,10 @@
 		<PackageProjectUrl>https://github.com/brianpos/fhir-distillery</PackageProjectUrl>
 		<RepositoryType>git</RepositoryType>
 		<RepositoryUrl>https://github.com/brianpos/fhir-distillery</RepositoryUrl>
+		<!-- Emit the XML doc file so the logical model generator can read /// comments -->
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<!-- The tool is not a documented library, so don't warn on missing XML comments -->
+		<NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
