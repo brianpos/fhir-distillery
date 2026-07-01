@@ -5,9 +5,20 @@
 
 ## 1. Overview
 
-This is a **code‑first** tool that turns C# classes into FHIR **logical models**
-(`StructureDefinition` resources with `kind = logical`), so that the classes become the
-single source of truth for both documentation and FML mappings.
+This is a **code‑first** feature of the `fhir-distillery` **dotnet tool** that turns C#
+classes into FHIR **logical models** (`StructureDefinition` resources with `kind = logical`),
+so that the classes become the single source of truth for both documentation and FML mappings.
+
+`fhir-distillery` is packaged and distributed as a .NET tool (`PackAsTool`, command name
+`fhir-distillery`) and installed with `dotnet tool install`. It today ships one capability —
+scanning example resources / a live FHIR server to derive profiles — and its options are
+expressed as a strongly‑typed [`Settings`](../fhir.distillery/Settings.cs) class bound from the
+command line via `System.CommandLine.NamingConventionBinder`, with defaults seeded from
+environment variables (see [`Program.GetRootCommand`](../fhir.distillery/Program.cs)). The
+logical‑model generator described here is a **second mode** of the same tool and follows the
+same settings pattern (§7): a `Settings`‑style options class, bound from the command line, and —
+for this mode — additionally loadable from a JSON settings file so it can carry the richer
+per‑type / per‑element overrides that a flat command line cannot.
 
 The workflow:
 
@@ -64,7 +75,7 @@ For each selected class:
 1. Create a `StructureDefinition` with `kind = logical`, `derivation = specialization`,
    `abstract = false`, `baseDefinition` = the parent model (or
    `http://hl7.org/fhir/StructureDefinition/Base` at the root of a chain), `url`/`type`
-   from the driver artifact (§7), and a root `ElementDefinition`.
+   from the settings (§7), and a root `ElementDefinition`.
 2. Enumerate the class's **own declared** properties (`BindingFlags.DeclaredOnly` — see
    §6 on derivation chains) and, for each, emit a child `ElementDefinition`:
    - **Path** = `RootName.propertyName` (or `[FhirElement(Name=…)]` if supplied).
@@ -140,7 +151,7 @@ for prose, keyed by *documentation IDs*:
 
 **Precedence chain** (for a given description field):
 
-1. An override supplied in the driver artifact (§7) — highest priority, for augmenting
+1. An override supplied in the JSON settings file (§7) — highest priority, for augmenting
    or correcting generated content from an external source.
 2. XML doc `<summary>` → `short`, `<remarks>` → `comment`/`definition` — the default,
    zero‑extra‑effort path.
@@ -226,30 +237,110 @@ resolver** is still worth implementing for the residual cases:
 If an `<inheritdoc>` cannot be resolved, leave the description empty rather than emitting
 the literal tag.
 
-## 7. The driver artifact — selecting classes and augmenting output
+## 7. Settings — selecting classes and augmenting output
 
-The tool is driven by **either command‑line parameters or a JSON file** (which carries
-the same parameters). The JSON form is preferred for anything non‑trivial because it can
-additionally hold **per‑model / per‑element overrides** that augment the generated
-content from an external source.
+The logical‑model generator is configured the same way as the rest of the `fhir-distillery`
+dotnet tool: a strongly‑typed options class (mirroring
+[`Settings`](../fhir.distillery/Settings.cs)) whose properties are bound from the command line
+via `System.CommandLine.NamingConventionBinder`, with defaults seeded from environment
+variables in [`Program.GetRootCommand`](../fhir.distillery/Program.cs). This mode adds one extra
+binding source that the existing scan mode does not need: an optional **JSON settings file**
+whose top‑level keys mirror the same option names (so the file and the flags are
+interchangeable), and which can *additionally* carry per‑type / per‑element overrides that a
+flat command line cannot express.
 
-**Cross‑cutting settings** (command‑line flags or top‑level JSON keys):
+Precedence when a value is supplied in more than one place:
+**command‑line flag → JSON settings file → environment variable → built‑in default.**
 
-- Target assembly path(s) and the list/selection of types to output.
-- Canonical URL base (canonicals come from the driver artifact / command line; a per‑type
-  `[FhirType(canonical)]` may override).
-- FHIR release — **R4** (see §8).
-- Publisher / status / version defaults, and the output directory.
+### 7.1 Proposed settings properties
 
-**Augmentation overrides** (JSON only): an optional per‑type / per‑element section that
-supplies documentation or metadata the code doesn't (or shouldn't) carry — e.g. a richer
-`short`/`definition`, a fixed cardinality, or a binding. These overrides sit at the top
-of the precedence chain (§4), giving an external place to refine generated output without
-touching the source classes.
+The following properties extend the `Settings` pattern for the generator mode. They are all
+bindable both as command‑line flags (kebab/camel aliases as in `Program.GetRootCommand`) and as
+top‑level keys in the JSON settings file.
 
-Selection of *which* classes to output can come from the driver artifact's type list,
-and/or discovery of types carrying `[FhirType]` (optionally scoped by the
-`[FhirModelAssembly]` marker).
+| Property | CLI alias | Type | Purpose |
+| --- | --- | --- | --- |
+| `AssemblyPaths` | `-a` / `--assembly` | `List<string>` | One or more compiled assemblies (`.dll`) to reflect over. |
+| `TypeNames` | `-t` / `--type` | `List<string>` | Explicit list of types to output; empty = discover all `[FhirType]` types. |
+| `IncludeNamespaces` / `ExcludeNamespaces` | `--include` / `--exclude` | `List<string>` | Namespace filters applied during type discovery. |
+| `DocumentationXmlPath` | `--docXml` | `string` | Override location of the `*.xml` doc file (§4); default is the sibling of each DLL. |
+| `OutputPath` | `-o` / `--outputPath` | `string` | Folder for the generated `*.StructureDefinition.json` (reuses the existing property). |
+| `BaseUrl` | `-b` / `--baseUrl` | `string` | Canonical base URL; `{BaseUrl}/StructureDefinition/{name}` unless `[FhirType(canonical)]` overrides (reuses the existing property). |
+| `Publisher` | `-p` / `--publisher` | `string` | `StructureDefinition.publisher` default (reuses the existing property). |
+| `Status` | `--status` | `string` | `StructureDefinition.status` default (e.g. `draft`). |
+| `Version` | `--version` | `string` | `StructureDefinition.version` default. |
+| `FhirVersion` | `--fhirVersion` | `string` | Target FHIR release; defaults to **R4** (§8). |
+| `SettingsFile` | `-c` / `--config` | `string` | Path to the JSON settings file described below. |
+| `Verbose` | `--verbose` | `bool` | Verbose diagnostics (reuses the existing property). |
+
+Properties that already exist on the shared `Settings` class (`OutputPath`, `BaseUrl`,
+`Publisher`, `Verbose`) are reused rather than duplicated.
+
+### 7.2 The JSON settings file — defaults and overrides
+
+The JSON settings file serves two jobs. Its top‑level keys are the **same option names** as the
+command line (so it is simply a more convenient way to pass the settings above). It then adds two
+sections the command line cannot carry:
+
+- **`defaults`** — values applied to *every* generated `StructureDefinition` unless a more
+  specific override or a code attribute supplies one (e.g. `status`, `version`, `publisher`,
+  `experimental`, `jurisdiction`, `contact`, `copyright`, `fhirVersion`).
+- **`overrides`** — a per‑type map, each entry optionally carrying model‑level metadata plus a
+  per‑element map. These sit at the **top of the precedence chain** (§4), so they augment or
+  correct generated content without touching the source classes — a richer `short`/`definition`,
+  a fixed cardinality, a binding, a `mustSupport` flag, a `fixed`/`pattern` value, etc.
+
+```jsonc
+{
+  // top-level keys mirror the command-line options (§7.1)
+  "assemblyPaths": ["./bin/Release/net10.0/MyModels.dll"],
+  "typeNames": ["MyOrg.Models.Patient", "MyOrg.Models.Coverage"],
+  "outputPath": "./OutputResources",
+  "baseUrl": "http://fhir.example.org",
+  "fhirVersion": "R4",
+
+  // applied to every generated StructureDefinition unless overridden
+  "defaults": {
+    "status": "draft",
+    "experimental": true,
+    "publisher": "My Organization",
+    "version": "0.1.0",
+    "jurisdiction": ["urn:iso:std:iso:3166#AU"],
+    "contact": [{ "name": "My Org", "telecom": [{ "system": "url", "value": "https://example.org" }] }],
+    "copyright": "© My Organization"
+  },
+
+  // per-type / per-element augmentations (highest precedence)
+  "overrides": {
+    "MyOrg.Models.Coverage": {
+      "url": "http://fhir.example.org/StructureDefinition/coverage",
+      "title": "Internal Coverage record",
+      "short": "A payer coverage line",
+      "status": "active",
+      "elements": {
+        "memberId": {
+          "short": "Payer-assigned member id",
+          "definition": "The identifier the payer uses for this member.",
+          "min": 1,
+          "max": "1",
+          "mustSupport": true,
+          "binding": { "strength": "required", "valueSet": "http://fhir.example.org/ValueSet/member-id-type" }
+        },
+        "legacyField": { "max": "0" }
+      }
+    }
+  }
+}
+```
+
+The `defaults`/`overrides` keys are intentionally shaped after `StructureDefinition` and
+`ElementDefinition` field names, so a maintainer can override essentially any generated field
+without a new bespoke vocabulary. Unknown keys are surfaced as warnings (in `--verbose`) rather
+than failing the run, so the file degrades gracefully as the model evolves.
+
+Selection of *which* classes to output can come from `TypeNames` / the `overrides` keys, and/or
+discovery of types carrying `[FhirType]` (optionally scoped by `IncludeNamespaces` /
+`ExcludeNamespaces` and the `[FhirModelAssembly]` marker).
 
 ## 8. Target FHIR release
 
@@ -273,7 +364,7 @@ Terminology binding is **in scope for v1**:
 | --- | --- |
 | Class selected for output (`[FhirType]`) | `StructureDefinition` `kind=logical`, `derivation=specialization`, root element |
 | Class name / `[FhirType(Name=…)]` | `name`, `id`, root element `path` |
-| `[FhirType(canonical)]` or driver base + name | `url` (canonical), `type` |
+| `[FhirType(canonical)]` or settings base + name | `url` (canonical), `type` |
 | Base class (`Derived : Base`) | `baseDefinition` = `Base` canonical; only own members in differential (`DeclaredOnly`) |
 | Declared public property | child `ElementDefinition` at `Root.prop` |
 | `[FhirElement(Order=…)]` | element `.order` / ordering |
@@ -289,15 +380,19 @@ Terminology binding is **in scope for v1**:
 | `[References(...)]` | `type.targetProfile` |
 | XML `<summary>` | `short` / `definition` |
 | XML `<remarks>` | `comment` / `definition` |
-| Driver‑artifact override | wins over generated `short`/`definition`/cardinality/binding |
+| JSON settings override | wins over generated `short`/`definition`/cardinality/binding |
 | `[NotMapped]` | skipped |
 
 ## 11. Suggested shape
 
-- A CLI command/mode, e.g. `gen-logical --assembly … --config …` (or with the individual
-  command‑line parameters from §7).
+- A generator command/mode of the `fhir-distillery` dotnet tool, e.g.
+  `fhir-distillery gen-logical --assembly … --config …` (or with the individual
+  command‑line settings from §7), bound via `System.CommandLine.NamingConventionBinder`
+  like the existing scan mode.
 - A `LogicalModelGenerator` class encapsulating the "type → StructureDefinition"
   projection, so it can be unit tested directly.
+- A settings/loader step that binds the command line, then (for this mode) overlays the
+  JSON settings file's `defaults`/`overrides` sections (§7.2).
 - Emit `*.StructureDefinition.json` via the Firely serializer.
 - Round‑trip test: define sample POCOs, generate, then feed the result into an FML
   validator to prove the generated models are usable as FML `source`/`target` structures.
@@ -360,7 +455,7 @@ Carry element descriptions in attributes rather than XML doc comments.
 
 - **Why not chosen:** this duplicates text developers would naturally write as `///`
   comments and must be maintained separately. XML doc comments are the primary
-  documentation channel (§4); external overrides for prose live in the driver artifact
+  documentation channel (§4); external overrides for prose live in the JSON settings file
   (§7) instead, so there's still a non‑source place to augment descriptions.
 
 ### A5. Flattening derived types into self‑contained models
