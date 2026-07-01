@@ -1,7 +1,7 @@
 # Generating FHIR Logical Models (StructureDefinitions) from C# Classes
 
 > Status: implementation guide (design agreed)
-> Audience: maintainers of `fml-processor`
+> Audience: maintainers of this tool
 
 ## 1. Overview
 
@@ -19,8 +19,7 @@ The workflow:
    types, bindings, and descriptions pulled from the code.
 3. The generated `StructureDefinition`s are then:
    - published as human‑readable documentation (via the IG publisher / Firely tooling), and
-   - used as the `source`/`target` structures in FML `StructureMap`s, which this
-     repository already parses, validates and serialises.
+   - used as the `source`/`target` structures in FML `StructureMap`s.
 
 The deliverable is *not* a new FHIR resource type — it is a **logical model** (the FHIR
 mechanism for describing arbitrary, non‑resource data structures). The tool's job is to
@@ -41,24 +40,22 @@ the types with `System.Reflection`. It combines three sources of metadata:
 Reasons this shape was chosen (over a Roslyn source generator, an instance‑inference
 tool, or a bespoke attribute set) are recorded in the **Appendix: Alternates considered**.
 
-### Why this fits the repository
+### Building blocks from the Firely SDK
 
-`fml-processor` already depends on the **Firely .NET SDK** (`Hl7.Fhir.R5` +
-`Hl7.Fhir.Conformance`, see `fml-processor/fml-processor.csproj`), which supplies the
-building blocks the generator needs:
+The generator builds on the **Firely .NET SDK**, which supplies the building blocks it
+needs:
 
 - **`StructureDefinition`, `ElementDefinition`, `ElementDefinition.TypeRefComponent`**
   POCOs plus a JSON serializer, so the tool never hand‑writes JSON.
 - **`ModelInspector`, `ClassMapping`, `PropertyMapping`** — the SDK's own reflection
   layer that already reads the FHIR attributes off .NET types (§3).
-- The existing FML validator consumes `StructureDefinition`s through
-  `Hl7.Fhir.Specification.Navigation` / `Source` (see `fml-processor/FmlAnnotations.cs`),
-  so anything generated can be fed straight back into the validator and mapping tooling
-  that already exists.
+- `StructureDefinition`s are consumed through `Hl7.Fhir.Specification.Navigation` /
+  `Source`, so anything generated can be fed straight back into the validator and mapping
+  tooling.
 
 Generating a model is therefore essentially "build `StructureDefinition` objects and
-call the serializer" — the data model, serialization, and downstream consumption already
-live in the codebase.
+call the serializer" — the data model, serialization, and downstream consumption are all
+provided by the SDK.
 
 ## 2. Generation pipeline
 
@@ -82,7 +79,7 @@ For each selected class:
 
 The generator reuses the Firely SDK's existing attributes for the *structural* schema
 rather than inventing a bespoke vocabulary. The following are verified against
-`Hl7.Fhir.Base` 5.12.1 (the version referenced by this repo) and map directly onto
+`Hl7.Fhir.Base` 5.13.4 (the version referenced by this project) and map directly onto
 `StructureDefinition`/`ElementDefinition`:
 
 | Firely attribute (namespace) | Target | Key members | Maps to |
@@ -241,7 +238,7 @@ content from an external source.
 - Target assembly path(s) and the list/selection of types to output.
 - Canonical URL base (canonicals come from the driver artifact / command line; a per‑type
   `[FhirType(canonical)]` may override).
-- FHIR release — **R5** (see §8).
+- FHIR release — **R4** (see §8).
 - Publisher / status / version defaults, and the output directory.
 
 **Augmentation overrides** (JSON only): an optional per‑type / per‑element section that
@@ -256,9 +253,8 @@ and/or discovery of types carrying `[FhirType]` (optionally scoped by the
 
 ## 8. Target FHIR release
 
-Generated logical models target **FHIR R5**, matching the `Hl7.Fhir.R5` SDK reference in
-this repo. R5 logical‑model JSON is also largely compatible with R4 consumers, so a
-single R5 output serves both in practice.
+Generated logical models target **FHIR R4**, matching the `Hl7.Fhir.R4` SDK reference in
+this project.
 
 ## 9. Terminology / bindings (in scope for v1)
 
@@ -296,17 +292,15 @@ Terminology binding is **in scope for v1**:
 | Driver‑artifact override | wins over generated `short`/`definition`/cardinality/binding |
 | `[NotMapped]` | skipped |
 
-## 11. Suggested shape in this repository
+## 11. Suggested shape
 
-- A new command/mode on the existing CLI entry point (`fml-processor/Program.cs`), e.g.
-  `fml-processor gen-logical --assembly … --config …` (or with the individual
+- A CLI command/mode, e.g. `gen-logical --assembly … --config …` (or with the individual
   command‑line parameters from §7).
 - A `LogicalModelGenerator` class encapsulating the "type → StructureDefinition"
   projection, so it can be unit tested directly.
 - Emit `*.StructureDefinition.json` via the Firely serializer.
-- Round‑trip test in `fml-tester`: define sample POCOs, generate, then feed the result
-  into the **existing** FML validator to prove the generated models are usable as FML
-  `source`/`target` structures.
+- Round‑trip test: define sample POCOs, generate, then feed the result into an FML
+  validator to prove the generated models are usable as FML `source`/`target` structures.
 
 ## Appendix: Alternates considered
 
@@ -327,7 +321,7 @@ JSON as a build artifact.
   the Firely SDK to build `StructureDefinition` POCOs, so we'd likely hand‑build JSON via
   a template and lose the SDK's serializer guarantees; harder to debug/unit‑test; and it
   can only see types in the compilation, not a prebuilt third‑party DLL. The reflection
-  approach reuses the Firely POCO + serializer stack already in the repo and works against
+  approach reuses the Firely POCO + serializer stack and works against
   any assembly. The projection logic is kept in a standalone class so a source‑generator
   front‑end could still be layered on later without rewriting the mapping.
 
