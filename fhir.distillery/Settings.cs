@@ -54,5 +54,17 @@ namespace fhir_distillery
         /// Provide verbose diagnostic output while processing
         /// </summary>
         public bool Verbose { get; set; }
+
+        /// <summary>
+        /// One or more compiled assemblies (.dll) to reflect over when generating logical models
+        /// (used by the <c>gen-logical</c> command)
+        /// </summary>
+        public List<string> AssemblyPaths { get; set; }
+
+        /// <summary>
+        /// The set of type name patterns (wildcards supported) to output as logical models.
+        /// When empty, all types carrying the Firely <c>[FhirType]</c> attribute are generated.
+        /// </summary>
+        public List<string> TypeNames { get; set; }
     }
 }

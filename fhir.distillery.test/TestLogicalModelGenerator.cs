@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using Hl7.Fhir.Model;
 using Hl7.Fhir.Serialization;
+using Hl7.Fhir.Utility;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace fhir_distillery
@@ -107,6 +108,110 @@ namespace fhir_distillery
             var parsed = new FhirJsonParser().Parse<StructureDefinition>(json);
             Assert.AreEqual(sd.Url, parsed.Url);
             Assert.AreEqual(sd.Differential.Element.Count, parsed.Differential.Element.Count);
+        }
+
+        /// <summary>A sample enum whose members carry only <c>///</c> doc comments (no Firely annotations).</summary>
+        public enum SampleColour
+        {
+            /// <summary>The colour red</summary>
+            Red,
+            /// <summary>The colour green</summary>
+            Green,
+            /// <summary>The colour blue</summary>
+            Blue
+        }
+
+        /// <summary>A sample POCO with an enum-typed property, used to exercise terminology generation.</summary>
+        public class SamplePoco
+        {
+            /// <summary>The chosen colour</summary>
+            public SampleColour Colour { get; set; }
+
+            /// <summary>An optional secondary colour</summary>
+            public SampleColour? SecondaryColour { get; set; }
+        }
+
+        [TestMethod]
+        public void GeneratesCodeSystemAndValueSetForEnumProperty()
+        {
+            var generator = CreateGenerator();
+            var result = generator.GenerateModel(typeof(SamplePoco));
+
+            // One CodeSystem and one ValueSet for the SampleColour enum (deduplicated across the two properties)
+            Assert.AreEqual(1, result.CodeSystems.Count);
+            Assert.AreEqual(1, result.ValueSets.Count);
+
+            var codeSystem = result.CodeSystems.Single();
+            Assert.AreEqual("http://fhir.example.org/CodeSystem/SampleColour", codeSystem.Url);
+            Assert.AreEqual(CodeSystemContentMode.Complete, codeSystem.Content);
+            Assert.AreEqual(3, codeSystem.Concept.Count);
+
+            // Codes come from the member names, displays/definitions from the XML doc comments
+            var red = codeSystem.Concept.Single(c => c.Code == "Red");
+            Assert.AreEqual("The colour red", red.Display);
+
+            var valueSet = result.ValueSets.Single();
+            Assert.AreEqual("http://fhir.example.org/ValueSet/SampleColour", valueSet.Url);
+            Assert.AreEqual(codeSystem.Url, valueSet.Compose.Include.Single().System);
+        }
+
+        [TestMethod]
+        public void EnumElementIsBoundToGeneratedValueSet()
+        {
+            var generator = CreateGenerator();
+            var result = generator.GenerateModel(typeof(SamplePoco));
+            var sd = result.StructureDefinition;
+
+            var colour = sd.Differential.Element.Single(e => e.Path == "SamplePoco.colour");
+            Assert.AreEqual("code", colour.Type.Single().Code);
+            Assert.IsNotNull(colour.Binding);
+            Assert.AreEqual(BindingStrength.Required, colour.Binding.Strength);
+            Assert.AreEqual("http://fhir.example.org/ValueSet/SampleColour", colour.Binding.ValueSet);
+        }
+
+        [TestMethod]
+        public void FirelyAnnotatedEnumReferencesExistingValueSet()
+        {
+            var generator = CreateGenerator();
+            var result = new LogicalModelResult();
+
+            // PublicationStatus carries the Firely [FhirEnumeration] attribute naming a canonical value set,
+            // so it should be referenced rather than regenerated under our base URL.
+            var valueSetUri = generator.GenerateEnumTerminology(typeof(PublicationStatus), result);
+
+            Assert.AreEqual("http://hl7.org/fhir/ValueSet/publication-status", valueSetUri);
+            Assert.AreEqual(0, result.CodeSystems.Count);
+            Assert.AreEqual(0, result.ValueSets.Count);
+        }
+
+        /// <summary>A sample enum annotated with the Firely SDK attributes (but no <c>[FhirEnumeration]</c>).</summary>
+        public enum SampleStatus
+        {
+            [EnumLiteral("act")]
+            [Hl7.Fhir.Utility.Description("Is active")]
+            Active,
+            [EnumLiteral("inact")]
+            [Hl7.Fhir.Utility.Description("No longer active")]
+            Inactive
+        }
+
+        public class SampleStatusPoco
+        {
+            public SampleStatus Status { get; set; }
+        }
+
+        [TestMethod]
+        public void UsesFirelyEnumLiteralAndDescriptionForCodesAndDisplays()
+        {
+            var generator = CreateGenerator();
+            var result = generator.GenerateModel(typeof(SampleStatusPoco));
+
+            var codeSystem = result.CodeSystems.Single();
+            // Codes come from [EnumLiteral], displays from [Description]
+            var active = codeSystem.Concept.Single(c => c.Display == "Is active");
+            Assert.AreEqual("act", active.Code);
+            var inactive = codeSystem.Concept.Single(c => c.Display == "No longer active");
+            Assert.AreEqual("inact", inactive.Code);
         }
     }
 }

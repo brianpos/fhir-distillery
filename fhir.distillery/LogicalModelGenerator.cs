@@ -100,9 +100,20 @@ namespace fhir_distillery
         /// <param name="type">The C# type (POCO) to project into a logical model.</param>
         /// <returns>The generated logical model <see cref="StructureDefinition"/>.</returns>
         public StructureDefinition GenerateLogicalModel(Type type)
+            => GenerateModel(type).StructureDefinition;
+
+        /// <summary>
+        /// Generate a FHIR logical model for the given C# type, along with any <see cref="CodeSystem"/>
+        /// and <see cref="ValueSet"/> resources derived from the enum-typed properties encountered.
+        /// </summary>
+        /// <param name="type">The C# type (POCO) to project into a logical model.</param>
+        /// <returns>The generated logical model plus any associated terminology resources.</returns>
+        public LogicalModelResult GenerateModel(Type type)
         {
             if (type == null)
                 throw new ArgumentNullException(nameof(type));
+
+            var result = new LogicalModelResult();
 
             // Make the type's own documentation available (best-effort)
             LoadDocumentationForAssembly(type.Assembly);
@@ -153,10 +164,11 @@ namespace fhir_distillery
             var nullabilityContext = new NullabilityInfoContext();
             foreach (var property in OrderProperties(properties))
             {
-                sd.Differential.Element.Add(BuildElement(name, property, nullabilityContext));
+                sd.Differential.Element.Add(BuildElement(name, property, nullabilityContext, result));
             }
 
-            return sd;
+            result.StructureDefinition = sd;
+            return result;
         }
 
         /// <summary>Order the properties by any <c>[FhirElement(Order=…)]</c>, then declaration order.</summary>
@@ -175,7 +187,7 @@ namespace fhir_distillery
         }
 
         /// <summary>Build a single child <see cref="ElementDefinition"/> for the given property.</summary>
-        private ElementDefinition BuildElement(string rootName, PropertyInfo property, NullabilityInfoContext nullabilityContext)
+        private ElementDefinition BuildElement(string rootName, PropertyInfo property, NullabilityInfoContext nullabilityContext, LogicalModelResult result)
         {
             var fhirElement = property.GetCustomAttribute<FhirElementAttribute>();
             string elementName = fhirElement?.Name ?? CamelCase(property.Name);
@@ -248,12 +260,23 @@ namespace fhir_distillery
 
             // A binding comes from an explicit [Binding] attribute or an enum value set
             var binding = property.GetCustomAttribute<BindingAttribute>();
+            var enumType = UnwrapEnumType(elementClrType);
             if (binding != null)
             {
                 element.Binding = new ElementDefinition.ElementDefinitionBindingComponent
                 {
                     Strength = BindingStrength.Required,
                     Description = binding.Name
+                };
+            }
+            else if (enumType != null)
+            {
+                // Derive (or reference) a ValueSet/CodeSystem for the enum and bind to it
+                string valueSetUri = GenerateEnumTerminology(enumType, result);
+                element.Binding = new ElementDefinition.ElementDefinitionBindingComponent
+                {
+                    Strength = BindingStrength.Required,
+                    ValueSet = valueSetUri
                 };
             }
 
@@ -265,7 +288,122 @@ namespace fhir_distillery
             return element;
         }
 
-        /// <summary>Resolve the <c>baseDefinition</c> for the type, specializing from a base model where present.</summary>
+        /// <summary>Return the underlying enum type of <paramref name="type"/> (unwrapping <c>Nullable&lt;T&gt;</c>), or null if it is not an enum.</summary>
+        private static Type UnwrapEnumType(Type type)
+        {
+            if (type == null)
+                return null;
+            type = Nullable.GetUnderlyingType(type) ?? type;
+            return type.IsEnum ? type : null;
+        }
+
+        /// <summary>
+        /// Derive (or reference) the terminology for a C# <c>enum</c> and return the canonical URL of the
+        /// bound <see cref="ValueSet"/>.
+        /// </summary>
+        /// <remarks>
+        /// If the enum carries the Firely <c>[FhirEnumeration]</c> attribute (as the SDK's own enums do), the
+        /// existing FHIR value set it names is referenced and no new resources are generated. Otherwise a new
+        /// <see cref="CodeSystem"/> and <see cref="ValueSet"/> are generated under the configured base URL, with
+        /// each concept's <c>code</c>/<c>display</c>/<c>definition</c> taken from the Firely <c>[EnumLiteral]</c> and
+        /// <c>[Description]</c> annotations, falling back to the member's XML doc comment and finally its name.
+        /// </remarks>
+        /// <param name="enumType">The CLR enum type to derive terminology for.</param>
+        /// <param name="result">The result collector that generated terminology resources are added to.</param>
+        /// <returns>The canonical URL of the value set the enum-typed element should bind to.</returns>
+        public string GenerateEnumTerminology(Type enumType, LogicalModelResult result)
+        {
+            LoadDocumentationForAssembly(enumType.Assembly);
+
+            // An existing Firely-annotated enum already names its canonical value set - just reference it.
+            var fhirEnumeration = enumType.GetCustomAttributes()
+                .FirstOrDefault(a => a.GetType().FullName == "Hl7.Fhir.Utility.FhirEnumerationAttribute");
+            string existingValueSet = fhirEnumeration != null ? GetAttributeString(fhirEnumeration, "Valueset") : null;
+            if (!string.IsNullOrEmpty(existingValueSet))
+                return existingValueSet;
+
+            string enumName = enumType.Name;
+            string codeSystemUrl = $"{TrimBaseUrl(_baseUrl)}/CodeSystem/{enumName}";
+            string valueSetUrl = $"{TrimBaseUrl(_baseUrl)}/ValueSet/{enumName}";
+
+            // Already generated during this run - reuse it (avoids duplicate resources for shared enums).
+            if (result != null && result.ValueSets.Any(vs => vs.Url == valueSetUrl))
+                return valueSetUrl;
+
+            var (enumShort, enumComment) = ReadDocumentation(DocId(enumType));
+
+            var codeSystem = new CodeSystem
+            {
+                Id = enumName,
+                Url = codeSystemUrl,
+                Name = enumName,
+                Title = PascalCaseWithSpaces(enumName),
+                Status = _status,
+                Publisher = _publisher,
+                Content = CodeSystemContentMode.Complete,
+                CaseSensitive = true,
+                ValueSet = valueSetUrl,
+                Description = enumComment ?? enumShort
+            };
+
+            foreach (var member in enumType.GetFields(BindingFlags.Public | BindingFlags.Static))
+            {
+                string code = GetEnumLiteral(member) ?? member.Name;
+                string display = GetDescription(member)
+                    ?? ReadDocumentation(DocId(member)).shortText
+                    ?? member.Name;
+                string definition = ReadDocumentation(DocId(member)).comment;
+                codeSystem.Concept.Add(new CodeSystem.ConceptDefinitionComponent
+                {
+                    Code = code,
+                    Display = display,
+                    Definition = definition
+                });
+            }
+            codeSystem.Count = codeSystem.Concept.Count;
+
+            var valueSet = new ValueSet
+            {
+                Id = enumName,
+                Url = valueSetUrl,
+                Name = enumName,
+                Title = PascalCaseWithSpaces(enumName),
+                Status = _status,
+                Publisher = _publisher,
+                Description = enumComment ?? enumShort,
+                Compose = new ValueSet.ComposeComponent()
+            };
+            valueSet.Compose.Include.Add(new ValueSet.ConceptSetComponent { System = codeSystemUrl });
+
+            result?.CodeSystems.Add(codeSystem);
+            result?.ValueSets.Add(valueSet);
+            return valueSetUrl;
+        }
+
+        /// <summary>Read the Firely <c>[EnumLiteral].Literal</c> value (the wire code) for an enum member, if present.</summary>
+        private static string GetEnumLiteral(FieldInfo member)
+        {
+            var literal = member.GetCustomAttributes()
+                .FirstOrDefault(a => a.GetType().FullName == "Hl7.Fhir.Utility.EnumLiteralAttribute");
+            return literal != null ? GetAttributeString(literal, "Literal") : null;
+        }
+
+        /// <summary>Read the Firely <c>[Description].Description</c> value (the human display) for an enum member, if present.</summary>
+        private static string GetDescription(FieldInfo member)
+        {
+            var description = member.GetCustomAttributes()
+                .FirstOrDefault(a => a.GetType().FullName == "Hl7.Fhir.Utility.DescriptionAttribute");
+            return description != null ? GetAttributeString(description, "Description") : null;
+        }
+
+        /// <summary>Read a string property from an attribute instance via reflection (the Firely utility attributes are not referenced at compile time).</summary>
+        private static string GetAttributeString(object attribute, string propertyName)
+        {
+            var value = attribute.GetType().GetProperty(propertyName)?.GetValue(attribute) as string;
+            return string.IsNullOrEmpty(value) ? null : value;
+        }
+
+
         private string ResolveBaseDefinition(Type type)
         {
             var baseType = type.BaseType;
@@ -373,10 +511,16 @@ namespace fhir_distillery
         }
 
         /// <summary>Build the XML documentation ID for a type (e.g. <c>T:Namespace.MyClass</c>).</summary>
-        private static string DocId(Type type) => $"T:{type.FullName}";
+        private static string DocId(Type type) => $"T:{DocTypeName(type)}";
 
         /// <summary>Build the XML documentation ID for a property (e.g. <c>P:Namespace.MyClass.MyProperty</c>).</summary>
-        private static string DocId(PropertyInfo property) => $"P:{property.DeclaringType.FullName}.{property.Name}";
+        private static string DocId(PropertyInfo property) => $"P:{DocTypeName(property.DeclaringType)}.{property.Name}";
+
+        /// <summary>Build the XML documentation ID for an enum member (e.g. <c>F:Namespace.MyEnum.Member</c>).</summary>
+        private static string DocId(FieldInfo member) => $"F:{DocTypeName(member.DeclaringType)}.{member.Name}";
+
+        /// <summary>Return a type's full name using the XML documentation nesting separator (<c>.</c> rather than <c>+</c>).</summary>
+        private static string DocTypeName(Type type) => (type.FullName ?? type.Name).Replace('+', '.');
 
         /// <summary>Remove any trailing slash from the base URL so paths can be composed consistently.</summary>
         private static string TrimBaseUrl(string baseUrl) => string.IsNullOrEmpty(baseUrl) ? baseUrl : baseUrl.TrimEnd('/');
@@ -395,6 +539,34 @@ namespace fhir_distillery
             if (string.IsNullOrEmpty(s))
                 return s;
             return Regex.Replace(s, "(?<=[a-z0-9])(?=[A-Z])", " ");
+        }
+    }
+
+    /// <summary>
+    /// The output of generating a logical model for a single C# type: the
+    /// <see cref="StructureDefinition"/> itself plus any terminology resources
+    /// (<see cref="CodeSystem"/>/<see cref="ValueSet"/>) derived from its enum-typed properties.
+    /// </summary>
+    public class LogicalModelResult
+    {
+        /// <summary>The generated logical model.</summary>
+        public StructureDefinition StructureDefinition { get; set; }
+
+        /// <summary>The code systems generated from the type's enum-typed properties.</summary>
+        public List<CodeSystem> CodeSystems { get; } = new List<CodeSystem>();
+
+        /// <summary>The value sets generated from the type's enum-typed properties.</summary>
+        public List<ValueSet> ValueSets { get; } = new List<ValueSet>();
+
+        /// <summary>Enumerate every generated resource (the model followed by its terminology).</summary>
+        public IEnumerable<Resource> AllResources()
+        {
+            if (StructureDefinition != null)
+                yield return StructureDefinition;
+            foreach (var cs in CodeSystems)
+                yield return cs;
+            foreach (var vs in ValueSets)
+                yield return vs;
         }
     }
 }
