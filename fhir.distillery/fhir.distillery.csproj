@@ -6,6 +6,7 @@
 		<RootNamespace>fhir_distillery</RootNamespace>
 		<IsPackable>true</IsPackable>
 		<PackAsTool>true</PackAsTool>
+		<PackageId>brianpos.fhir-distillery</PackageId>
 		<ToolCommandName>fhir-distillery</ToolCommandName>
 		<PackageOutputPath>..\nupkg</PackageOutputPath>
 		<PackageProjectUrl>https://github.com/brianpos/fhir-distillery</PackageProjectUrl>
