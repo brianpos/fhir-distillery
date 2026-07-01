@@ -27,3 +27,12 @@ jobs:
 
       - name: Test
         run: dotnet test fhir.distillery.sln --configuration Release --no-build --verbosity normal
+
+      - name: Pack
+        run: dotnet pack fhir.distillery/fhir.distillery.csproj --configuration Release --no-build --output ${{ github.workspace }}/nupkg
+
+      - name: Upload NuGet package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nupkg
+          path: ${{ github.workspace }}/nupkg/*.nupkg
