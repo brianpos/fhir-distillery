@@ -114,7 +114,17 @@ namespace fhir_distillery
                 throw new ArgumentNullException(nameof(type));
 
             var result = new LogicalModelResult();
+            result.StructureDefinition = BuildStructureDefinition(type, result);
+            return result;
+        }
 
+        /// <summary>
+        /// Build the <see cref="StructureDefinition"/> for a type into a (possibly shared) result. The model is
+        /// registered on the result up-front so that referenced complex types (which each become their own model)
+        /// can resolve back-references and cycles without regenerating.
+        /// </summary>
+        private StructureDefinition BuildStructureDefinition(Type type, LogicalModelResult result)
+        {
             // Make the type's own documentation available (best-effort)
             LoadDocumentationForAssembly(type.Assembly);
 
@@ -139,23 +149,38 @@ namespace fhir_distillery
                 Differential = new StructureDefinition.DifferentialComponent()
             };
 
+            // Register the model before projecting its members so that referenced complex types
+            // (each of which becomes its own model) can resolve back-references without regenerating.
+            result.StructureDefinitions.Add(sd);
+
             // Description comes from the class' <summary>
             var (classShort, classComment) = ReadDocumentation(DocId(type));
             sd.Description = classComment ?? classShort;
 
-            // Root element
+            // Root element - the root of a logical model carries no cardinality (min/max)
             var rootElement = new ElementDefinition
             {
                 ElementId = name,
                 Path = name,
                 Short = classShort,
-                Definition = classShort,
-                Min = 0,
-                Max = "*"
+                Definition = classShort
             };
             sd.Differential.Element.Add(rootElement);
 
             // Only the type's own declared properties are projected (specialization, not flattening)
+            var nullabilityContext = new NullabilityInfoContext();
+            var nestedStack = new HashSet<Type>();
+            foreach (var property in GetProjectedProperties(type))
+            {
+                AddElement(sd, name, property, nullabilityContext, result, nestedStack);
+            }
+
+            return sd;
+        }
+
+        /// <summary>Gather the public instance properties of a type that should be projected as elements.</summary>
+        private static IEnumerable<PropertyInfo> GetProjectedProperties(Type type)
+        {
             var properties = type
                 .GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
                 .Where(p => p.CanRead && p.GetIndexParameters().Length == 0)
@@ -163,15 +188,27 @@ namespace fhir_distillery
                 // Skip properties that are ignored during serialization - they would not be present
                 // in an instance serialized from the content, so they should not be modelled either.
                 .Where(p => !IsSerializationIgnored(p));
+            return OrderProperties(properties);
+        }
 
-            var nullabilityContext = new NullabilityInfoContext();
-            foreach (var property in OrderProperties(properties))
+        /// <summary>
+        /// Build the <see cref="ElementDefinition"/> for a property and add it (and, for a nested complex type,
+        /// its recursively projected child elements) to the model's differential.
+        /// </summary>
+        private void AddElement(StructureDefinition sd, string rootName, PropertyInfo property,
+            NullabilityInfoContext nullabilityContext, LogicalModelResult result, HashSet<Type> nestedStack)
+        {
+            var element = BuildElement(rootName, property, nullabilityContext, result, out Type nestedComplexType);
+            sd.Differential.Element.Add(element);
+
+            // A nested complex type is projected inline as BackboneElement children (recurse into its members).
+            // The stack guards against a nested type that (directly or transitively) references itself.
+            if (nestedComplexType != null && nestedStack.Add(nestedComplexType))
             {
-                sd.Differential.Element.Add(BuildElement(name, property, nullabilityContext, result));
+                foreach (var child in GetProjectedProperties(nestedComplexType))
+                    AddElement(sd, element.Path, child, nullabilityContext, result, nestedStack);
+                nestedStack.Remove(nestedComplexType);
             }
-
-            result.StructureDefinition = sd;
-            return result;
         }
 
         /// <summary>Order the properties by any <c>[FhirElement(Order=…)]</c>, then declaration order.</summary>
@@ -190,8 +227,13 @@ namespace fhir_distillery
         }
 
         /// <summary>Build a single child <see cref="ElementDefinition"/> for the given property.</summary>
-        private ElementDefinition BuildElement(string rootName, PropertyInfo property, NullabilityInfoContext nullabilityContext, LogicalModelResult result)
+        /// <param name="nestedComplexType">
+        /// Set to the CLR type whose members should be projected inline as <c>BackboneElement</c> children when the
+        /// property is a nested complex type; otherwise <c>null</c>.
+        /// </param>
+        private ElementDefinition BuildElement(string rootName, PropertyInfo property, NullabilityInfoContext nullabilityContext, LogicalModelResult result, out Type nestedComplexType)
         {
+            nestedComplexType = null;
             var fhirElement = property.GetCustomAttribute<FhirElementAttribute>();
             string elementName = fhirElement?.Name ?? CamelCase(property.Name);
             string path = $"{rootName}.{elementName}";
@@ -247,7 +289,7 @@ namespace fhir_distillery
             }
             else
             {
-                element.Type.Add(new ElementDefinition.TypeRefComponent { Code = MapClrTypeToFhir(elementClrType) });
+                element.Type.Add(BuildComplexOrPrimitiveType(elementClrType, result, out nestedComplexType));
             }
 
             // Reference target profiles
@@ -498,6 +540,63 @@ namespace fhir_distillery
         }
 
         /// <summary>
+        /// Build the <see cref="ElementDefinition.TypeRefComponent"/> for a property whose type was not overridden
+        /// by an explicit attribute. Primitive types map to their FHIR code directly. A complex type is either
+        /// projected inline (nested class → <c>BackboneElement</c> children, signalled via
+        /// <paramref name="nestedComplexType"/>) or emitted as a separate logical model referenced by its
+        /// canonical URL (non-nested class).
+        /// </summary>
+        private ElementDefinition.TypeRefComponent BuildComplexOrPrimitiveType(Type elementClrType, LogicalModelResult result, out Type nestedComplexType)
+        {
+            nestedComplexType = null;
+            string code = MapClrTypeToFhir(elementClrType);
+            if (code != "BackboneElement")
+                return new ElementDefinition.TypeRefComponent { Code = code };
+
+            // A complex type used only within its parent is projected inline as BackboneElement children.
+            if (IsNestedType(elementClrType))
+            {
+                nestedComplexType = elementClrType;
+                return new ElementDefinition.TypeRefComponent { Code = "BackboneElement" };
+            }
+
+            // A complex type that stands on its own becomes a separate logical model, referenced by canonical URL.
+            var referenced = GenerateReferencedModel(elementClrType, result);
+            return new ElementDefinition.TypeRefComponent { Code = referenced.Url };
+        }
+
+        /// <summary>
+        /// Determine whether a complex type is "nested" (used only within its parent, projected inline as
+        /// <c>BackboneElement</c> children) rather than a standalone type that becomes its own logical model.
+        /// A CLR nested class, or a type marked <c>[FhirType(IsNestedType = true)]</c>, is treated as nested.
+        /// </summary>
+        private static bool IsNestedType(Type type)
+        {
+            var fhirType = type.GetCustomAttribute<FhirTypeAttribute>();
+            if (fhirType != null && fhirType.IsNestedType)
+                return true;
+            return type.IsNested;
+        }
+
+        /// <summary>
+        /// Emit (or reuse) a separate logical model for a non-nested complex type referenced from a property,
+        /// adding it to the shared <paramref name="result"/>. Returns the referenced model so the caller can
+        /// link to it by canonical URL.
+        /// </summary>
+        private StructureDefinition GenerateReferencedModel(Type type, LogicalModelResult result)
+        {
+            var fhirType = type.GetCustomAttribute<FhirTypeAttribute>();
+            string name = fhirType?.Name ?? type.Name;
+            string url = fhirType?.Canonical ?? $"{TrimBaseUrl(_baseUrl)}/StructureDefinition/{name}";
+
+            var existing = result.StructureDefinitions.FirstOrDefault(s => s.Url == url);
+            if (existing != null)
+                return existing;
+
+            return BuildStructureDefinition(type, result);
+        }
+
+        /// <summary>
         /// Determine whether the given type is an enumerable of a single element type (excluding
         /// <see cref="string"/> and <c>byte[]</c>, which are treated as scalar values).
         /// </summary>
@@ -599,8 +698,13 @@ namespace fhir_distillery
     /// </summary>
     public class LogicalModelResult
     {
-        /// <summary>The generated logical model.</summary>
+        /// <summary>The generated logical model. When the type references other non-nested complex types,
+        /// those become additional models available via <see cref="StructureDefinitions"/>.</summary>
         public StructureDefinition StructureDefinition { get; set; }
+
+        /// <summary>Every generated logical model: the model for the requested type plus any additional models
+        /// generated for non-nested complex types referenced (directly or transitively) by its properties.</summary>
+        public List<StructureDefinition> StructureDefinitions { get; } = new List<StructureDefinition>();
 
         /// <summary>The code systems generated from the type's enum-typed properties.</summary>
         public List<CodeSystem> CodeSystems { get; } = new List<CodeSystem>();
@@ -608,11 +712,11 @@ namespace fhir_distillery
         /// <summary>The value sets generated from the type's enum-typed properties.</summary>
         public List<ValueSet> ValueSets { get; } = new List<ValueSet>();
 
-        /// <summary>Enumerate every generated resource (the model followed by its terminology).</summary>
+        /// <summary>Enumerate every generated resource (all models followed by their terminology).</summary>
         public IEnumerable<Resource> AllResources()
         {
-            if (StructureDefinition != null)
-                yield return StructureDefinition;
+            foreach (var sd in StructureDefinitions)
+                yield return sd;
             foreach (var cs in CodeSystems)
                 yield return cs;
             foreach (var vs in ValueSets)

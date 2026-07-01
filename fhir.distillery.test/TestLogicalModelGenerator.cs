@@ -19,9 +19,9 @@ namespace fhir_distillery
 
         private void DebugDump(LogicalModelResult result)
         {
-            if (result.StructureDefinition != null)
+            foreach (var sd in result.StructureDefinitions)
             {
-                TestScanResources.DebugDumpOutputXml(result.StructureDefinition);
+                TestScanResources.DebugDumpOutputXml(sd);
             }
             foreach (var r in result.ValueSets)
             {
@@ -292,6 +292,110 @@ namespace fhir_distillery
             // Properties ignored during serialization are not modelled at all
             Assert.IsFalse(sd.Differential.Element.Any(e => e.Path == "SerializationAttributesPoco.jsonOnlyIgnored"));
             Assert.IsFalse(sd.Differential.Element.Any(e => e.Path == "SerializationAttributesPoco.xmlOnlyIgnored"));
+        }
+
+        [TestMethod]
+        public void RootElementHasNoCardinality()
+        {
+            var generator = CreateGenerator();
+            var sd = generator.GenerateLogicalModel(typeof(Settings));
+            DebugDump(sd);
+
+            // The root element of a logical model carries no cardinality (min/max)
+            var root = sd.Differential.Element.First();
+            Assert.AreEqual("Settings", root.Path);
+            Assert.IsNull(root.Min);
+            Assert.IsNull(root.Max);
+        }
+
+        [TestMethod]
+        public void NestedComplexTypeProjectsBackboneElementChildren()
+        {
+            var generator = CreateGenerator();
+            var result = generator.GenerateModel(typeof(OrderWithNestedAddress));
+            DebugDump(result);
+
+            // A nested class is projected inline, so only a single model is produced
+            Assert.AreEqual(1, result.StructureDefinitions.Count);
+            var sd = result.StructureDefinition;
+
+            // The nested-typed property is a BackboneElement...
+            var shipTo = sd.Differential.Element.Single(e => e.Path == "OrderWithNestedAddress.shipTo");
+            Assert.AreEqual("BackboneElement", shipTo.Type.Single().Code);
+
+            // ...and its members are projected inline as child elements of that backbone
+            Assert.IsTrue(sd.Differential.Element.Any(e => e.Path == "OrderWithNestedAddress.shipTo.street"),
+                "Expected the nested type's members to be projected as backbone-element children");
+            var city = sd.Differential.Element.Single(e => e.Path == "OrderWithNestedAddress.shipTo.city");
+            Assert.AreEqual("string", city.Type.Single().Code);
+        }
+
+        [TestMethod]
+        public void NonNestedComplexTypeBecomesSeparateReferencedModel()
+        {
+            var generator = CreateGenerator();
+            var result = generator.GenerateModel(typeof(InvoiceWithReferencedCustomer));
+            DebugDump(result);
+
+            // A non-nested (standalone) complex type becomes its own model referenced by canonical URL,
+            // so generating one type produces two StructureDefinitions.
+            Assert.AreEqual(2, result.StructureDefinitions.Count);
+
+            var sd = result.StructureDefinition;
+            Assert.AreEqual("InvoiceWithReferencedCustomer", sd.Name);
+
+            string customerUrl = "http://fhir.example.org/StructureDefinition/ReferencedCustomer";
+
+            // The referencing element links to the separate model by its canonical URL rather than inlining it
+            var customer = sd.Differential.Element.Single(e => e.Path == "InvoiceWithReferencedCustomer.customer");
+            Assert.AreEqual(customerUrl, customer.Type.Single().Code);
+
+            // The referenced model is generated as a peer, with its own elements (not inlined into the parent)
+            var referenced = result.StructureDefinitions.Single(s => s.Url == customerUrl);
+            Assert.AreEqual("ReferencedCustomer", referenced.Name);
+            Assert.IsTrue(referenced.Differential.Element.Any(e => e.Path == "ReferencedCustomer.name"));
+            Assert.IsFalse(sd.Differential.Element.Any(e => e.Path.StartsWith("InvoiceWithReferencedCustomer.customer.")),
+                "The referenced type should not be inlined into the parent model");
+        }
+    }
+
+    /// <summary>A standalone (non-nested) complex type; when referenced it becomes its own logical model.</summary>
+    public class ReferencedCustomer
+    {
+        /// <summary>The customer identifier</summary>
+        public string Id { get; set; }
+
+        /// <summary>The customer name</summary>
+        public string Name { get; set; }
+    }
+
+    /// <summary>A POCO referencing a standalone complex type, which should yield a separate referenced model.</summary>
+    public class InvoiceWithReferencedCustomer
+    {
+        /// <summary>The invoice number</summary>
+        public string Number { get; set; }
+
+        /// <summary>The billed customer (a standalone complex type)</summary>
+        public ReferencedCustomer Customer { get; set; }
+    }
+
+    /// <summary>A POCO with a CLR-nested complex type, which should be projected inline as BackboneElements.</summary>
+    public class OrderWithNestedAddress
+    {
+        /// <summary>The order reference</summary>
+        public string Reference { get; set; }
+
+        /// <summary>The delivery address (a nested complex type used only within this order)</summary>
+        public NestedAddress ShipTo { get; set; }
+
+        /// <summary>A nested complex type used only within its parent.</summary>
+        public class NestedAddress
+        {
+            /// <summary>The street</summary>
+            public string Street { get; set; }
+
+            /// <summary>The city</summary>
+            public string City { get; set; }
         }
     }
 }
