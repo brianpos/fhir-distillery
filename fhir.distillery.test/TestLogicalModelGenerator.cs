@@ -17,11 +17,33 @@ namespace fhir_distillery
         static LogicalModelGenerator CreateGenerator()
             => new LogicalModelGenerator("http://fhir.example.org/", "My Organization");
 
+        private void DebugDump(LogicalModelResult result)
+        {
+            if (result.StructureDefinition != null)
+            {
+                TestScanResources.DebugDumpOutputXml(result.StructureDefinition);
+            }
+            foreach (var r in result.ValueSets)
+            {
+                TestScanResources.DebugDumpOutputXml(r);
+            }
+            foreach (var r in result.CodeSystems)
+            {
+                TestScanResources.DebugDumpOutputXml(r);
+            }
+        }
+
+        private void DebugDump(Resource resource)
+        {
+            TestScanResources.DebugDumpOutputXml(resource);
+        }
+
         [TestMethod]
         public void GenerateLogicalModelFromSettingsClass()
         {
             var generator = CreateGenerator();
             var sd = generator.GenerateLogicalModel(typeof(Settings));
+            DebugDump(sd);
 
             Assert.IsNotNull(sd);
             Assert.AreEqual("Settings", sd.Name);
@@ -41,6 +63,7 @@ namespace fhir_distillery
         {
             var generator = CreateGenerator();
             var sd = generator.GenerateLogicalModel(typeof(Settings));
+            DebugDump(sd);
 
             int propertyCount = typeof(Settings).GetProperties().Length;
 
@@ -62,6 +85,7 @@ namespace fhir_distillery
         {
             var generator = CreateGenerator();
             var sd = generator.GenerateLogicalModel(typeof(Settings));
+            DebugDump(sd);
 
             // string property -> string, optional (nullable reference type) so min = 0, max = 1
             var sourcePath = sd.Differential.Element.Single(e => e.Path == "Settings.sourcePath");
@@ -86,6 +110,7 @@ namespace fhir_distillery
         {
             var generator = CreateGenerator();
             var sd = generator.GenerateLogicalModel(typeof(Settings));
+            DebugDump(sd);
 
             // The Settings.OutputPath property carries a /// <summary> comment; when the sibling
             // XML doc file is present it should be projected into the element description.
@@ -100,6 +125,7 @@ namespace fhir_distillery
         {
             var generator = CreateGenerator();
             var sd = generator.GenerateLogicalModel(typeof(Settings));
+            DebugDump(sd);
 
             // Round-trip through the Firely serializer to prove the model is well formed
             var json = new FhirJsonSerializer(new SerializerSettings { Pretty = true }).SerializeToString(sd);
@@ -136,10 +162,12 @@ namespace fhir_distillery
         {
             var generator = CreateGenerator();
             var result = generator.GenerateModel(typeof(SamplePoco));
+            DebugDump(result);
 
             // One CodeSystem and one ValueSet for the SampleColour enum (deduplicated across the two properties)
             Assert.AreEqual(1, result.CodeSystems.Count);
             Assert.AreEqual(1, result.ValueSets.Count);
+            DebugDump(result);
 
             var codeSystem = result.CodeSystems.Single();
             Assert.AreEqual("http://fhir.example.org/CodeSystem/SampleColour", codeSystem.Url);
@@ -160,6 +188,7 @@ namespace fhir_distillery
         {
             var generator = CreateGenerator();
             var result = generator.GenerateModel(typeof(SamplePoco));
+            DebugDump(result);
             var sd = result.StructureDefinition;
 
             var colour = sd.Differential.Element.Single(e => e.Path == "SamplePoco.colour");
@@ -178,6 +207,9 @@ namespace fhir_distillery
             // PublicationStatus carries the Firely [FhirEnumeration] attribute naming a canonical value set,
             // so it should be referenced rather than regenerated under our base URL.
             var valueSetUri = generator.GenerateEnumTerminology(typeof(PublicationStatus), result);
+            
+            // There will be nothing reported from this as when using that attribute, that's expected
+            DebugDump(result);
 
             Assert.AreEqual("http://hl7.org/fhir/ValueSet/publication-status", valueSetUri);
             Assert.AreEqual(0, result.CodeSystems.Count);
@@ -205,6 +237,7 @@ namespace fhir_distillery
         {
             var generator = CreateGenerator();
             var result = generator.GenerateModel(typeof(SampleStatusPoco));
+            DebugDump(result);
 
             var codeSystem = result.CodeSystems.Single();
             // Codes come from [EnumLiteral], displays from [Description]
@@ -242,6 +275,7 @@ namespace fhir_distillery
         {
             var generator = CreateGenerator();
             var sd = generator.GenerateLogicalModel(typeof(SerializationAttributesPoco));
+            DebugDump(sd);
 
             // The XmlAttribute-decorated property gets representation = xmlAttr
             var code = sd.Differential.Element.Single(e => e.Path == "SerializationAttributesPoco.code");
