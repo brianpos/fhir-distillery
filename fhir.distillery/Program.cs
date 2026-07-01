@@ -4,6 +4,7 @@ using System.CommandLine;
 using System.CommandLine.NamingConventionBinder;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using Hl7.Fhir.ElementModel;
 using Hl7.Fhir.Model;
@@ -45,10 +46,14 @@ namespace fhir_distillery
         /// </summary>
         public static RootCommand GetRootCommand(string[] args)
         {
-            // Seed the option defaults from the environment (command line values override these)
-            IConfiguration configuration = new ConfigurationBuilder()
-                    .AddEnvironmentVariables()
-                    .Build();
+            // Seed the option defaults from the environment and (when supplied) the JSON settings file.
+            // Precedence (low to high): built-in default -> environment variable -> JSON settings file -> command-line flag.
+            var configurationBuilder = new ConfigurationBuilder()
+                    .AddEnvironmentVariables();
+            string settingsFilePath = GetSettingsFilePath(args);
+            if (!string.IsNullOrEmpty(settingsFilePath) && File.Exists(settingsFilePath))
+                configurationBuilder.AddJsonFile(Path.GetFullPath(settingsFilePath), optional: true);
+            IConfiguration configuration = configurationBuilder.Build();
             var settings = configuration.Get<Settings>() ?? new Settings();
 
             var sourcePathOption = new Option<string>(["-s", "--sourcePath"], () => settings.SourcePath, "The path containing any existing StructureDefinitions to use while scanning");
@@ -61,19 +66,75 @@ namespace fhir_distillery
                 new Option<string>(["-p", "--publisher"], () => settings.Publisher, "The publisher value to stamp onto the generated StructureDefinitions"),
                 new Option<string>(["-sf", "--scanFolder"], () => settings.ScanFolder, "A local folder of example resources (xml/json) to scan for extensions and property usage"),
                 new Option<string>(["-su", "--serverUrl"], () => settings.ServerUrl, "The base URL of a FHIR Server to scan for extensions and property usage"),
+                new Option<List<string>>(["-sh", "--serverHeaders"], () => settings.ServerHeaders, "Headers to add when connecting to the FHIR Server (e.g. an authentication header), one 'Header: value' pair per entry"),
                 new Option<List<string>>(["-q", "--queries"], () => settings.Queries, "The queries to execute against the FHIR Server when scanning (e.g. Questionnaire?_count=10)"),
+                new Option<output_format>(["-df", "--outputFormat"], () => settings.OutputFormat ?? output_format.xml, "The serialization format (xml/json) for the generated resources and server exchange"),
                 new Option<bool>(["--verbose"], () => settings.Verbose, "Provide verbose diagnostic output while processing"),
             };
 
             // Check that there is at least a source of examples to scan (folder or server)
             rootCommand.AddValidator((result) =>
             {
+                // The gen-logical subcommand has its own inputs and does not scan examples
+                if (args.Contains("gen-logical"))
+                    return;
                 List<string> scanFolderAliases = ["-sf", "--scanFolder"];
                 List<string> serverAliases = ["-su", "--serverUrl"];
                 if (!args.Any(a => scanFolderAliases.Contains(a)) && !args.Any(a => serverAliases.Contains(a)))
                     result.ErrorMessage = "The scanFolder and serverUrl are both missing, please provide one or the other to indicate what to scan for extensions and property usage";
             });
+
+            rootCommand.AddCommand(GetGenerateLogicalCommand(settings));
             return rootCommand;
+        }
+
+        /// <summary>
+        /// Build the <c>gen-logical</c> subcommand that reflects over one or more assemblies and emits
+        /// FHIR logical models (plus any CodeSystem/ValueSet resources derived from enum properties).
+        /// </summary>
+        public static Command GetGenerateLogicalCommand(Settings settings)
+        {
+            var command = new Command("gen-logical", "Generate FHIR logical models (and enum CodeSystems/ValueSets) from C# classes")
+            {
+                new Option<List<string>>(["--assemblyPaths", "-a", "--assembly"], "One or more compiled assemblies (.dll) to reflect over") { IsRequired = true },
+                new Option<List<string>>(["--typeNames", "-t", "--type"], "Type name patterns to output (wildcards supported); empty = all [FhirType] types"),
+                new Option<string>(["-o", "--outputPath"], () => settings.OutputPath ?? "OutputResources", "The folder where the generated resources are written"),
+                new Option<string>(["-b", "--baseUrl"], () => settings.BaseUrl, "The canonical base URL to use for the generated resources (e.g. http://fhir.example.org/)"),
+                new Option<string>(["-p", "--publisher"], () => settings.Publisher, "The publisher value to stamp onto the generated resources"),
+                new Option<output_format>(["-df", "--outputFormat"], () => settings.OutputFormat ?? output_format.xml, "The serialization format (xml/json) for the generated resources"),
+                new Option<string>(["--settingsFile", "-c", "--config"], () => settings.SettingsFile, "Path to a JSON settings file carrying the defaults/overrides applied to the generated resources"),
+                new Option<bool>(["--verbose"], () => settings.Verbose, "Provide verbose diagnostic output while processing"),
+            };
+
+            command.Handler = CommandHandler.Create((Settings context) =>
+            {
+                try
+                {
+                    return RunLogicalModelGeneration(context);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                    return -1;
+                }
+            });
+            return command;
+        }
+
+        /// <summary>
+        /// Peek the raw argument list for the <c>-c</c>/<c>--config</c> settings file path so it can seed the
+        /// configuration before the command line is fully bound (the file's top-level keys mirror the options).
+        /// </summary>
+        static string GetSettingsFilePath(string[] args)
+        {
+            if (args == null)
+                return null;
+            for (int i = 0; i < args.Length - 1; i++)
+            {
+                if (args[i] == "-c" || args[i] == "--config")
+                    return args[i + 1];
+            }
+            return null;
         }
 
         /// <summary>Run the distillery over the configured examples folder and/or FHIR server.</summary>
@@ -98,7 +159,130 @@ namespace fhir_distillery
             return 0;
         }
 
-        /// <summary>Scan a folder of xml/json example resources for extensions and property usage.</summary>
+        /// <summary>
+        /// Reflect over the configured assemblies and emit FHIR logical models for the selected types,
+        /// together with any CodeSystem/ValueSet resources derived from their enum-typed properties.
+        /// </summary>
+        public static int RunLogicalModelGeneration(Settings settings)
+        {
+            if (settings.AssemblyPaths == null || !settings.AssemblyPaths.Any())
+            {
+                Console.WriteLine("No assemblies were provided; use --assembly to point at one or more .dll files");
+                return -1;
+            }
+
+            // Ensure the output folder exists
+            if (!string.IsNullOrEmpty(settings.OutputPath) && !Directory.Exists(settings.OutputPath))
+                Directory.CreateDirectory(settings.OutputPath);
+
+            var generator = new LogicalModelGenerator(settings.BaseUrl, settings.Publisher);
+
+            // Load any JSON settings file defaults/overrides to apply to the generated StructureDefinitions
+            var settingsFile = GeneratorSettingsFile.Load(settings.SettingsFile);
+
+            var types = DiscoverTypes(settings).ToList();
+            if (!types.Any())
+            {
+                Console.WriteLine("No matching types were found to generate logical models from");
+                return 0;
+            }
+
+            var serializer = CreateSerializer(settings.OutputFormat);
+            int modelCount = 0, terminologyCount = 0;
+            foreach (var type in types)
+            {
+                var result = generator.GenerateModel(type);
+                settingsFile.Apply(result.StructureDefinition, settings.Verbose);
+                if (settings.Verbose)
+                    Console.WriteLine($"Generated logical model {result.StructureDefinition.Url} ({type.FullName})");
+                foreach (var resource in result.AllResources())
+                {
+                    SaveResource(settings.OutputPath, resource, serializer, settings.OutputFormat);
+                    if (resource is StructureDefinition)
+                        modelCount++;
+                    else
+                        terminologyCount++;
+                }
+            }
+            Console.WriteLine($"Generated {modelCount} logical model(s) and {terminologyCount} terminology resource(s) into {settings.OutputPath}");
+            return 0;
+        }
+
+        /// <summary>Load the configured assemblies and select the types to generate logical models for.</summary>
+        static IEnumerable<Type> DiscoverTypes(Settings settings)
+        {
+            var patterns = settings.TypeNames ?? new List<string>();
+            var results = new List<Type>();
+            foreach (var assemblyPath in settings.AssemblyPaths)
+            {
+                Assembly assembly;
+                try
+                {
+                    assembly = Assembly.LoadFrom(Path.GetFullPath(assemblyPath));
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"  ==> Unable to load assembly {assemblyPath}: {ex.Message}");
+                    continue;
+                }
+
+                Type[] assemblyTypes;
+                try
+                {
+                    assemblyTypes = assembly.GetTypes();
+                }
+                catch (ReflectionTypeLoadException ex)
+                {
+                    assemblyTypes = ex.Types.Where(t => t != null).ToArray();
+                }
+
+                foreach (var type in assemblyTypes.Where(t => t.IsClass && !t.IsAbstract && (t.IsPublic || t.IsNestedPublic)))
+                {
+                    bool selected = patterns.Any()
+                        ? patterns.Any(p => MatchesTypePattern(type, p))
+                        : type.GetCustomAttribute<Hl7.Fhir.Introspection.FhirTypeAttribute>() != null;
+                    if (selected)
+                        results.Add(type);
+                }
+            }
+            return results.Distinct();
+        }
+
+        /// <summary>Match a type's full name against a glob-style (or <c>regex:</c>-prefixed) pattern.</summary>
+        static bool MatchesTypePattern(Type type, string pattern)
+        {
+            if (string.IsNullOrEmpty(pattern))
+                return false;
+            string fullName = type.FullName ?? type.Name;
+            if (pattern.StartsWith("regex:", StringComparison.OrdinalIgnoreCase))
+                return System.Text.RegularExpressions.Regex.IsMatch(fullName, pattern.Substring("regex:".Length));
+            if (string.Equals(fullName, pattern, StringComparison.Ordinal) || string.Equals(type.Name, pattern, StringComparison.Ordinal))
+                return true;
+            string regex = "^" + System.Text.RegularExpressions.Regex.Escape(pattern).Replace("\\*", ".*").Replace("\\?", ".") + "$";
+            return System.Text.RegularExpressions.Regex.IsMatch(fullName, regex)
+                || System.Text.RegularExpressions.Regex.IsMatch(type.Name, regex);
+        }
+
+        /// <summary>Create a FHIR serializer for the requested output format (defaults to XML).</summary>
+        static Hl7.Fhir.Serialization.BaseFhirSerializer CreateSerializer(output_format? format)
+        {
+            if (format == output_format.json)
+                return new FhirJsonSerializer(new SerializerSettings() { AppendNewLine = true, Pretty = true });
+            return new FhirXmlSerializer(new SerializerSettings() { AppendNewLine = true, Pretty = true });
+        }
+
+        /// <summary>Serialize a generated resource to <c>{ResourceType}-{id}.{xml|json}</c> under the output folder.</summary>
+        static void SaveResource(string outputPath, Resource resource, Hl7.Fhir.Serialization.BaseFhirSerializer serializer, output_format? format)
+        {
+            string extension = format == output_format.json ? "json" : "xml";
+            string fileName = $"{resource.TypeName}-{resource.Id}.{extension}";
+            string content = serializer is FhirJsonSerializer json
+                ? json.SerializeToString(resource)
+                : ((FhirXmlSerializer)serializer).SerializeToString(resource);
+            File.WriteAllText(Path.Combine(outputPath ?? ".", fileName), content);
+        }
+
+
         public static void ScanFolder(ScanResources processor, string scanFolder, bool verbose = false)
         {
             foreach (string file in Directory.EnumerateFiles(scanFolder, "*.xml", SearchOption.AllDirectories))
@@ -154,7 +338,7 @@ namespace fhir_distillery
         /// <summary>Scan a live FHIR server for extensions and property usage.</summary>
         public static void ScanServer(ScanResources processor, Settings settings)
         {
-            var server = new FhirClient(settings.ServerUrl, new FhirClientSettings() { VerifyFhirVersion = false });
+            var server = CreateFhirClient(settings);
             foreach (var query in settings.Queries ?? Enumerable.Empty<string>())
             {
                 try
@@ -180,6 +364,39 @@ namespace fhir_distillery
                     Console.WriteLine($"  ==> Exception {ex.Message}");
                 }
             }
+        }
+
+        /// <summary>
+        /// Create a <see cref="FhirClient"/> for the configured server, applying any authentication/other
+        /// headers and the preferred serialization format (mirrors the UploadFIG header/format handling).
+        /// </summary>
+        public static FhirClient CreateFhirClient(Settings settings)
+        {
+            var client = new System.Net.Http.HttpClient();
+            if (settings.ServerHeaders?.Any() == true)
+            {
+                Console.WriteLine("Headers:");
+                foreach (var header in settings.ServerHeaders)
+                {
+                    if (!header.Contains(':'))
+                        continue;
+                    var kv = header.Split(new[] { ':' }, 2);
+                    string name = kv[0].Trim();
+                    Console.WriteLine($"\t{name}");
+                    if (name.Equals("authentication", StringComparison.OrdinalIgnoreCase)
+                        && kv[1].Trim().StartsWith("bearer", StringComparison.OrdinalIgnoreCase))
+                        Console.WriteLine($"\t\tWARNING: '{name}' header was provided, should that be 'Authorization'?");
+                    client.DefaultRequestHeaders.Add(name, kv[1].Trim());
+                }
+            }
+
+            var clientSettings = new FhirClientSettings { VerifyFhirVersion = false };
+            if (settings.OutputFormat == output_format.json)
+                clientSettings.PreferredFormat = ResourceFormat.Json;
+            else if (settings.OutputFormat == output_format.xml)
+                clientSettings.PreferredFormat = ResourceFormat.Xml;
+
+            return new FhirClient(new Uri(settings.ServerUrl), client, clientSettings);
         }
     }
 }

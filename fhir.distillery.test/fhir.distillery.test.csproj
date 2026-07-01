@@ -4,6 +4,9 @@
     <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>fhir.distillery.test</RootNamespace>
     <UserSecretsId>33f1a79b-8e80-46ca-a738-80644dc988f2</UserSecretsId>
+    <!-- Emit XML docs so the terminology generator tests can read /// comments off the sample enums -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

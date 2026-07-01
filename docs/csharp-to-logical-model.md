@@ -104,6 +104,8 @@ rather than inventing a bespoke vocabulary. The following are verified against
 | `[DeclaredType(Type=…)]` (`Introspection`) | Property | `Type` | overrides the CLR→FHIR type mapping |
 | `[BackboneType(definitionPath)]` (`Introspection`) | Class | `DefinitionPath` | nested `BackboneElement` typing |
 | `[NotMapped]` (`Introspection`) | Any | — | the "ignore this member" marker |
+| `[JsonIgnore]` / `[XmlIgnore]` (`System.Text.Json` / `Newtonsoft.Json` / `System.Xml.Serialization`) | Property | — | member excluded from serialization → skipped (would not appear in a serialized instance) |
+| `[XmlAttribute]` / `[XmlText]` (`System.Xml.Serialization`) | Property | — | element `representation` = `xmlAttr` / `xmlText` (in addition to `[FhirElement(XmlSerialization=…)]`) |
 | `[FhirModelAssembly(since)]` (`Introspection`) | Assembly | `FhirRelease Since` | marks an assembly as a FHIR model provider (discovery) |
 | `[Versioned]` / `[VersionedValidation]` (`Introspection`/`Validation`) | Any | `FhirRelease Since` | version‑gating elements |
 | `[UriPattern]` (`Validation`) | Property | — | uri‑format validation hint |
@@ -270,7 +272,9 @@ top‑level keys in the JSON settings file.
 | `Status` | `--status` | `string` | `StructureDefinition.status` default (e.g. `draft`). |
 | `Version` | `--version` | `string` | `StructureDefinition.version` default. |
 | `FhirVersion` | `--fhirVersion` | `string` | Target FHIR release; defaults to **R4** (§8). |
-| `SettingsFile` | `-c` / `--config` | `string` | Path to the JSON settings file described below. **Command‑line only** — it must not appear inside the JSON file itself (§7.2). |
+| `SettingsFile` | `-c` / `--config` / `--settingsFile` | `string` | Path to the JSON settings file described below. **Command‑line only** — it must not appear inside the JSON file itself (§7.2). |
+| `OutputFormat` | `-df` / `--outputFormat` | `xml` \| `json` | Serialization format for the generated resources (and server exchange). Defaults to `xml`. Mirrors the UploadFIG `DestinationFormat` setting. |
+| `ServerHeaders` | `-sh` / `--serverHeaders` | `List<string>` | Headers (e.g. an authentication header) added when connecting to a FHIR Server, one `Header: value` pair per entry. Mirrors the UploadFIG `DestinationServerHeaders` setting. |
 | `Verbose` | `--verbose` | `bool` | Verbose diagnostics (reuses the existing property). |
 
 Properties that already exist on the shared `Settings` class (`OutputPath`, `BaseUrl`,
@@ -388,14 +392,23 @@ this project.
 
 ## 9. Terminology / bindings (in scope for v1)
 
-Terminology binding is **in scope for v1**:
+Terminology binding is **in scope for v1** and is implemented by
+[`LogicalModelGenerator.GenerateEnumTerminology`](../fhir.distillery/LogicalModelGenerator.cs):
 
-- A C# `enum` property → `type.code = code` (or `Coding`/`CodeableConcept` where
-  appropriate) with an `ElementDefinition.binding` to a **generated `ValueSet`** whose
-  concepts come from the enum members.
-- Enum member `///` comments feed the `ValueSet` concept `display`/`definition`.
+- A C# `enum` property → `type.code = code` with an `ElementDefinition.binding`
+  (strength `required`) to a **generated `ValueSet`** whose concepts come from the enum members.
+- Each concept's `code` comes from the Firely `[EnumLiteral]` annotation (falling back to the
+  member name); its `display` comes from the Firely `[Description]` annotation (falling back to the
+  member's `///` `<summary>` comment, then the member name); its `definition` comes from the
+  member's `<remarks>` comment. A matching `CodeSystem` (content `complete`) is generated alongside
+  the `ValueSet`.
+- If the enum already carries the Firely `[FhirEnumeration]` attribute (as the SDK's own enums do),
+  the existing canonical `ValueSet` it names is **referenced** and no new resources are generated.
 - An explicit `[Binding(name)]` attribute binds to a named/existing value set instead of a
   generated one.
+
+The `gen-logical` command writes the generated `CodeSystem`/`ValueSet` resources alongside the
+`StructureDefinition`s in the output folder.
 
 ## 10. Mapping cheat‑sheet: C# → StructureDefinition
 
@@ -424,17 +437,24 @@ Terminology binding is **in scope for v1**:
 
 ## 11. Suggested shape
 
-- A generator command/mode of the `fhir-distillery` dotnet tool, e.g.
-  `fhir-distillery gen-logical --assembly … --config …` (or with the individual
-  command‑line settings from §7), bound via `System.CommandLine.NamingConventionBinder`
-  like the existing scan mode.
-- A `LogicalModelGenerator` class encapsulating the "type → StructureDefinition"
-  projection, so it can be unit tested directly.
-- A settings/loader step that binds the command line, then (for this mode) overlays the
-  JSON settings file's `defaults`/`overrides` sections (§7.2).
-- Emit `*.StructureDefinition.json` via the Firely serializer.
-- Round‑trip test: define sample POCOs, generate, then feed the result into an FML
-  validator to prove the generated models are usable as FML `source`/`target` structures.
+Implemented so far (see [`LogicalModelGenerator`](../fhir.distillery/LogicalModelGenerator.cs) and the
+`gen-logical` command in [`Program`](../fhir.distillery/Program.cs)):
+
+- A `gen-logical` subcommand of the `fhir-distillery` dotnet tool —
+  `fhir-distillery gen-logical --assembly … --type … --baseUrl … --publisher … --outputPath …`,
+  bound via `System.CommandLine.NamingConventionBinder` like the existing scan mode. Type
+  selection supports exact names and glob (`*`/`?`) patterns, with a `regex:` opt-in (§7.3);
+  when no `--type` is given, all `[FhirType]`-annotated types are generated.
+- A `LogicalModelGenerator` class encapsulating the "type → StructureDefinition" projection plus
+  enum → `CodeSystem`/`ValueSet` terminology (§9), so it can be unit tested directly.
+- Generated resources are emitted as `*.xml` via the Firely serializer into the output folder.
+
+Not yet implemented (future work):
+
+- A JSON settings file with `defaults`/`overrides` sections (§7.2) and settings-file write-back.
+- Round‑trip test feeding the result into an FML validator to prove the generated models are usable
+  as FML `source`/`target` structures.
+
 
 ## Appendix: Alternates considered
 
