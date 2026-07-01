@@ -1,0 +1,39 @@
+name: Deploy to NuGet
+
+on:
+  push:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Build, Test and Publish
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Compute version
+        id: version
+        run: echo "version=$(date -u +'%Y.%-m.%-d').${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+
+      - name: Restore dependencies
+        run: dotnet restore fhir.distillery.sln
+
+      - name: Build
+        run: dotnet build fhir.distillery.sln --configuration Release --no-restore -p:Version=${{ steps.version.outputs.version }} -p:InformationalVersion=${{ steps.version.outputs.version }}+${{ github.sha }}
+
+      - name: Test
+        run: dotnet test fhir.distillery.sln --configuration Release --no-build --verbosity normal
+
+      - name: Pack
+        run: dotnet pack fhir.distillery/fhir.distillery.csproj --configuration Release --no-build --output ${{ github.workspace }}/nupkg -p:Version=${{ steps.version.outputs.version }} -p:InformationalVersion=${{ steps.version.outputs.version }}+${{ github.sha }}
+
+      - name: Push to NuGet
+        run: dotnet nuget push "${{ github.workspace }}/nupkg/*.nupkg" --api-key "${{ secrets.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
