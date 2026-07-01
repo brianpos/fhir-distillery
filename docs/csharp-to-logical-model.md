@@ -104,6 +104,8 @@ rather than inventing a bespoke vocabulary. The following are verified against
 | `[DeclaredType(Type=…)]` (`Introspection`) | Property | `Type` | overrides the CLR→FHIR type mapping |
 | `[BackboneType(definitionPath)]` (`Introspection`) | Class | `DefinitionPath` | nested `BackboneElement` typing |
 | `[NotMapped]` (`Introspection`) | Any | — | the "ignore this member" marker |
+| `[JsonIgnore]` / `[XmlIgnore]` (`System.Text.Json` / `Newtonsoft.Json` / `System.Xml.Serialization`) | Property | — | member excluded from serialization → skipped (would not appear in a serialized instance) |
+| `[XmlAttribute]` / `[XmlText]` (`System.Xml.Serialization`) | Property | — | element `representation` = `xmlAttr` / `xmlText` (in addition to `[FhirElement(XmlSerialization=…)]`) |
 | `[FhirModelAssembly(since)]` (`Introspection`) | Assembly | `FhirRelease Since` | marks an assembly as a FHIR model provider (discovery) |
 | `[Versioned]` / `[VersionedValidation]` (`Introspection`/`Validation`) | Any | `FhirRelease Since` | version‑gating elements |
 | `[UriPattern]` (`Validation`) | Property | — | uri‑format validation hint |
@@ -270,7 +272,9 @@ top‑level keys in the JSON settings file.
 | `Status` | `--status` | `string` | `StructureDefinition.status` default (e.g. `draft`). |
 | `Version` | `--version` | `string` | `StructureDefinition.version` default. |
 | `FhirVersion` | `--fhirVersion` | `string` | Target FHIR release; defaults to **R4** (§8). |
-| `SettingsFile` | `-c` / `--config` | `string` | Path to the JSON settings file described below. **Command‑line only** — it must not appear inside the JSON file itself (§7.2). |
+| `SettingsFile` | `-c` / `--config` / `--settingsFile` | `string` | Path to the JSON settings file described below. **Command‑line only** — it must not appear inside the JSON file itself (§7.2). |
+| `OutputFormat` | `-df` / `--outputFormat` | `xml` \| `json` | Serialization format for the generated resources (and server exchange). Defaults to `xml`. Mirrors the UploadFIG `DestinationFormat` setting. |
+| `ServerHeaders` | `-sh` / `--serverHeaders` | `List<string>` | Headers (e.g. an authentication header) added when connecting to a FHIR Server, one `Header: value` pair per entry. Mirrors the UploadFIG `DestinationServerHeaders` setting. |
 | `Verbose` | `--verbose` | `bool` | Verbose diagnostics (reuses the existing property). |
 
 Properties that already exist on the shared `Settings` class (`OutputPath`, `BaseUrl`,

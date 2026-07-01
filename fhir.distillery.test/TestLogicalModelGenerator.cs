@@ -213,5 +213,51 @@ namespace fhir_distillery
             var inactive = codeSystem.Concept.Single(c => c.Display == "No longer active");
             Assert.AreEqual("inact", inactive.Code);
         }
+
+        /// <summary>A sample POCO exercising serialization attributes: XML attribute/text and ignored properties.</summary>
+        public class SerializationAttributesPoco
+        {
+            /// <summary>Rendered as an XML attribute</summary>
+            [System.Xml.Serialization.XmlAttribute]
+            public string Code { get; set; }
+
+            /// <summary>Rendered as XML element text</summary>
+            [System.Xml.Serialization.XmlText]
+            public string Value { get; set; }
+
+            /// <summary>A normal element (no special representation)</summary>
+            public string Display { get; set; }
+
+            /// <summary>Ignored by the JSON serializer, so it should not be modelled</summary>
+            [System.Text.Json.Serialization.JsonIgnore]
+            public string JsonOnlyIgnored { get; set; }
+
+            /// <summary>Ignored by the XML serializer, so it should not be modelled</summary>
+            [System.Xml.Serialization.XmlIgnore]
+            public string XmlOnlyIgnored { get; set; }
+        }
+
+        [TestMethod]
+        public void SetsXmlAttrRepresentationAndSkipsIgnoredProperties()
+        {
+            var generator = CreateGenerator();
+            var sd = generator.GenerateLogicalModel(typeof(SerializationAttributesPoco));
+
+            // The XmlAttribute-decorated property gets representation = xmlAttr
+            var code = sd.Differential.Element.Single(e => e.Path == "SerializationAttributesPoco.code");
+            Assert.AreEqual(ElementDefinition.PropertyRepresentation.XmlAttr, code.Representation.Single());
+
+            // The XmlText-decorated property gets representation = xmlText
+            var value = sd.Differential.Element.Single(e => e.Path == "SerializationAttributesPoco.value");
+            Assert.AreEqual(ElementDefinition.PropertyRepresentation.XmlText, value.Representation.Single());
+
+            // A plain property has no representation set
+            var display = sd.Differential.Element.Single(e => e.Path == "SerializationAttributesPoco.display");
+            Assert.IsFalse(display.Representation.Any());
+
+            // Properties ignored during serialization are not modelled at all
+            Assert.IsFalse(sd.Differential.Element.Any(e => e.Path == "SerializationAttributesPoco.jsonOnlyIgnored"));
+            Assert.IsFalse(sd.Differential.Element.Any(e => e.Path == "SerializationAttributesPoco.xmlOnlyIgnored"));
+        }
     }
 }

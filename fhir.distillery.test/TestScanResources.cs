@@ -93,6 +93,40 @@ namespace fhir_distillery
         }
 
         [TestMethod]
+        public void TestServerHeaderAndOutputFormatParameters()
+        {
+            var settings = ParseArguments(new[]
+            {
+                "-su", "https://fhir.forms-lab.com/",
+                "-sh", "Authorization: ******",
+                "-sh", "X-Api-Key: abc123",
+                "-df", "json",
+            });
+
+            Assert.IsNotNull(settings);
+            Assert.IsNotNull(settings.ServerHeaders);
+            Assert.AreEqual(2, settings.ServerHeaders.Count);
+            Assert.AreEqual("Authorization: ******", settings.ServerHeaders[0]);
+            Assert.AreEqual("X-Api-Key: abc123", settings.ServerHeaders[1]);
+            Assert.AreEqual(output_format.json, settings.OutputFormat);
+        }
+
+        [TestMethod]
+        public void TestFhirClientAppliesAuthHeaders()
+        {
+            var settings = new Settings
+            {
+                ServerUrl = "https://fhir.forms-lab.com/",
+                ServerHeaders = new List<string> { "Authorization: ******" },
+                OutputFormat = output_format.json,
+            };
+
+            var client = Program.CreateFhirClient(settings);
+            Assert.IsNotNull(client);
+            Assert.AreEqual(ResourceFormat.Json, client.Settings.PreferredFormat);
+        }
+
+        [TestMethod]
         public void TestConfigurationParameterDefaults()
         {
             // Only provide the mandatory scanFolder, everything else should fall back to defaults

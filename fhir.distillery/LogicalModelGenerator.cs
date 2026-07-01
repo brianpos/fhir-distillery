@@ -159,7 +159,10 @@ namespace fhir_distillery
             var properties = type
                 .GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
                 .Where(p => p.CanRead && p.GetIndexParameters().Length == 0)
-                .Where(p => p.GetCustomAttribute<System.ComponentModel.DataAnnotations.Schema.NotMappedAttribute>() == null);
+                .Where(p => p.GetCustomAttribute<System.ComponentModel.DataAnnotations.Schema.NotMappedAttribute>() == null)
+                // Skip properties that are ignored during serialization - they would not be present
+                // in an instance serialized from the content, so they should not be modelled either.
+                .Where(p => !IsSerializationIgnored(p));
 
             var nullabilityContext = new NullabilityInfoContext();
             foreach (var property in OrderProperties(properties))
@@ -285,10 +288,57 @@ namespace fhir_distillery
             if (fhirElement?.IsModifier == true)
                 element.IsModifier = true;
 
+            // Record any XML attribute/text serialization so a consumer knows how the element appears
+            // in an XML instance. Elements with no special XML representation leave the property unset.
+            var representation = DetermineXmlRepresentation(property, fhirElement);
+            if (representation.HasValue)
+                element.Representation = new[] { (ElementDefinition.PropertyRepresentation?)representation.Value };
+
             return element;
         }
 
-        /// <summary>Return the underlying enum type of <paramref name="type"/> (unwrapping <c>Nullable&lt;T&gt;</c>), or null if it is not an enum.</summary>
+        /// <summary>The full names of the attributes that mark a property as excluded from serialization.</summary>
+        private static readonly string[] _ignoreAttributeNames =
+        {
+            "System.Text.Json.Serialization.JsonIgnoreAttribute",
+            "Newtonsoft.Json.JsonIgnoreAttribute",
+            "System.Xml.Serialization.XmlIgnoreAttribute",
+        };
+
+        /// <summary>
+        /// Determine whether a property is excluded from serialization (JSON or XML) and therefore would not
+        /// appear in an instance serialized from the content, so it should not be projected into the model.
+        /// </summary>
+        private static bool IsSerializationIgnored(PropertyInfo property)
+        {
+            return property.GetCustomAttributes(true)
+                .Any(a => _ignoreAttributeNames.Contains(a.GetType().FullName));
+        }
+
+        /// <summary>
+        /// Determine the FHIR <c>representation</c> (xmlAttr / xmlText) for a property from the Firely
+        /// <c>[FhirElement(XmlSerialization=…)]</c> metadata or the standard <c>System.Xml.Serialization</c>
+        /// attributes. Returns <c>null</c> when the property has no special XML representation.
+        /// </summary>
+        private static ElementDefinition.PropertyRepresentation? DetermineXmlRepresentation(PropertyInfo property, FhirElementAttribute fhirElement)
+        {
+            // The Firely [FhirElement] attribute records the XML serialization mode directly.
+            string xmlSerialization = fhirElement?.XmlSerialization.ToString();
+            if (string.Equals(xmlSerialization, "XmlAttr", StringComparison.Ordinal))
+                return ElementDefinition.PropertyRepresentation.XmlAttr;
+            if (string.Equals(xmlSerialization, "XmlText", StringComparison.Ordinal))
+                return ElementDefinition.PropertyRepresentation.XmlText;
+
+            // Fall back to the standard System.Xml.Serialization attributes (matched by name to avoid a hard reference).
+            var xmlAttributeNames = property.GetCustomAttributes(true).Select(a => a.GetType().FullName).ToList();
+            if (xmlAttributeNames.Contains("System.Xml.Serialization.XmlAttributeAttribute"))
+                return ElementDefinition.PropertyRepresentation.XmlAttr;
+            if (xmlAttributeNames.Contains("System.Xml.Serialization.XmlTextAttribute"))
+                return ElementDefinition.PropertyRepresentation.XmlText;
+
+            return null;
+        }
+
         private static Type UnwrapEnumType(Type type)
         {
             if (type == null)

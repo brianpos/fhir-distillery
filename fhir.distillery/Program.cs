@@ -46,10 +46,14 @@ namespace fhir_distillery
         /// </summary>
         public static RootCommand GetRootCommand(string[] args)
         {
-            // Seed the option defaults from the environment (command line values override these)
-            IConfiguration configuration = new ConfigurationBuilder()
-                    .AddEnvironmentVariables()
-                    .Build();
+            // Seed the option defaults from the environment and (when supplied) the JSON settings file.
+            // Precedence (low to high): built-in default -> environment variable -> JSON settings file -> command-line flag.
+            var configurationBuilder = new ConfigurationBuilder()
+                    .AddEnvironmentVariables();
+            string settingsFilePath = GetSettingsFilePath(args);
+            if (!string.IsNullOrEmpty(settingsFilePath) && File.Exists(settingsFilePath))
+                configurationBuilder.AddJsonFile(Path.GetFullPath(settingsFilePath), optional: true);
+            IConfiguration configuration = configurationBuilder.Build();
             var settings = configuration.Get<Settings>() ?? new Settings();
 
             var sourcePathOption = new Option<string>(["-s", "--sourcePath"], () => settings.SourcePath, "The path containing any existing StructureDefinitions to use while scanning");
@@ -62,7 +66,9 @@ namespace fhir_distillery
                 new Option<string>(["-p", "--publisher"], () => settings.Publisher, "The publisher value to stamp onto the generated StructureDefinitions"),
                 new Option<string>(["-sf", "--scanFolder"], () => settings.ScanFolder, "A local folder of example resources (xml/json) to scan for extensions and property usage"),
                 new Option<string>(["-su", "--serverUrl"], () => settings.ServerUrl, "The base URL of a FHIR Server to scan for extensions and property usage"),
+                new Option<List<string>>(["-sh", "--serverHeaders"], () => settings.ServerHeaders, "Headers to add when connecting to the FHIR Server (e.g. an authentication header), one 'Header: value' pair per entry"),
                 new Option<List<string>>(["-q", "--queries"], () => settings.Queries, "The queries to execute against the FHIR Server when scanning (e.g. Questionnaire?_count=10)"),
+                new Option<output_format>(["-df", "--outputFormat"], () => settings.OutputFormat ?? output_format.xml, "The serialization format (xml/json) for the generated resources and server exchange"),
                 new Option<bool>(["--verbose"], () => settings.Verbose, "Provide verbose diagnostic output while processing"),
             };
 
@@ -95,6 +101,8 @@ namespace fhir_distillery
                 new Option<string>(["-o", "--outputPath"], () => settings.OutputPath ?? "OutputResources", "The folder where the generated resources are written"),
                 new Option<string>(["-b", "--baseUrl"], () => settings.BaseUrl, "The canonical base URL to use for the generated resources (e.g. http://fhir.example.org/)"),
                 new Option<string>(["-p", "--publisher"], () => settings.Publisher, "The publisher value to stamp onto the generated resources"),
+                new Option<output_format>(["-df", "--outputFormat"], () => settings.OutputFormat ?? output_format.xml, "The serialization format (xml/json) for the generated resources"),
+                new Option<string>(["--settingsFile", "-c", "--config"], () => settings.SettingsFile, "Path to a JSON settings file carrying the defaults/overrides applied to the generated resources"),
                 new Option<bool>(["--verbose"], () => settings.Verbose, "Provide verbose diagnostic output while processing"),
             };
 
@@ -111,6 +119,22 @@ namespace fhir_distillery
                 }
             });
             return command;
+        }
+
+        /// <summary>
+        /// Peek the raw argument list for the <c>-c</c>/<c>--config</c> settings file path so it can seed the
+        /// configuration before the command line is fully bound (the file's top-level keys mirror the options).
+        /// </summary>
+        static string GetSettingsFilePath(string[] args)
+        {
+            if (args == null)
+                return null;
+            for (int i = 0; i < args.Length - 1; i++)
+            {
+                if (args[i] == "-c" || args[i] == "--config")
+                    return args[i + 1];
+            }
+            return null;
         }
 
         /// <summary>Run the distillery over the configured examples folder and/or FHIR server.</summary>
@@ -153,6 +177,9 @@ namespace fhir_distillery
 
             var generator = new LogicalModelGenerator(settings.BaseUrl, settings.Publisher);
 
+            // Load any JSON settings file defaults/overrides to apply to the generated StructureDefinitions
+            var settingsFile = GeneratorSettingsFile.Load(settings.SettingsFile);
+
             var types = DiscoverTypes(settings).ToList();
             if (!types.Any())
             {
@@ -160,16 +187,17 @@ namespace fhir_distillery
                 return 0;
             }
 
-            var serializer = new FhirXmlSerializer(new SerializerSettings() { AppendNewLine = true, Pretty = true });
+            var serializer = CreateSerializer(settings.OutputFormat);
             int modelCount = 0, terminologyCount = 0;
             foreach (var type in types)
             {
                 var result = generator.GenerateModel(type);
+                settingsFile.Apply(result.StructureDefinition, settings.Verbose);
                 if (settings.Verbose)
                     Console.WriteLine($"Generated logical model {result.StructureDefinition.Url} ({type.FullName})");
                 foreach (var resource in result.AllResources())
                 {
-                    SaveResource(settings.OutputPath, resource, serializer);
+                    SaveResource(settings.OutputPath, resource, serializer, settings.OutputFormat);
                     if (resource is StructureDefinition)
                         modelCount++;
                     else
@@ -235,11 +263,23 @@ namespace fhir_distillery
                 || System.Text.RegularExpressions.Regex.IsMatch(type.Name, regex);
         }
 
-        /// <summary>Serialize a generated resource to <c>{ResourceType}-{id}.xml</c> under the output folder.</summary>
-        static void SaveResource(string outputPath, Resource resource, FhirXmlSerializer serializer)
+        /// <summary>Create a FHIR serializer for the requested output format (defaults to XML).</summary>
+        static Hl7.Fhir.Serialization.BaseFhirSerializer CreateSerializer(output_format? format)
         {
-            string fileName = $"{resource.TypeName}-{resource.Id}.xml";
-            File.WriteAllText(Path.Combine(outputPath ?? ".", fileName), serializer.SerializeToString(resource));
+            if (format == output_format.json)
+                return new FhirJsonSerializer(new SerializerSettings() { AppendNewLine = true, Pretty = true });
+            return new FhirXmlSerializer(new SerializerSettings() { AppendNewLine = true, Pretty = true });
+        }
+
+        /// <summary>Serialize a generated resource to <c>{ResourceType}-{id}.{xml|json}</c> under the output folder.</summary>
+        static void SaveResource(string outputPath, Resource resource, Hl7.Fhir.Serialization.BaseFhirSerializer serializer, output_format? format)
+        {
+            string extension = format == output_format.json ? "json" : "xml";
+            string fileName = $"{resource.TypeName}-{resource.Id}.{extension}";
+            string content = serializer is FhirJsonSerializer json
+                ? json.SerializeToString(resource)
+                : ((FhirXmlSerializer)serializer).SerializeToString(resource);
+            File.WriteAllText(Path.Combine(outputPath ?? ".", fileName), content);
         }
 
 
@@ -298,7 +338,7 @@ namespace fhir_distillery
         /// <summary>Scan a live FHIR server for extensions and property usage.</summary>
         public static void ScanServer(ScanResources processor, Settings settings)
         {
-            var server = new FhirClient(settings.ServerUrl, new FhirClientSettings() { VerifyFhirVersion = false });
+            var server = CreateFhirClient(settings);
             foreach (var query in settings.Queries ?? Enumerable.Empty<string>())
             {
                 try
@@ -324,6 +364,39 @@ namespace fhir_distillery
                     Console.WriteLine($"  ==> Exception {ex.Message}");
                 }
             }
+        }
+
+        /// <summary>
+        /// Create a <see cref="FhirClient"/> for the configured server, applying any authentication/other
+        /// headers and the preferred serialization format (mirrors the UploadFIG header/format handling).
+        /// </summary>
+        public static FhirClient CreateFhirClient(Settings settings)
+        {
+            var client = new System.Net.Http.HttpClient();
+            if (settings.ServerHeaders?.Any() == true)
+            {
+                Console.WriteLine("Headers:");
+                foreach (var header in settings.ServerHeaders)
+                {
+                    if (!header.Contains(':'))
+                        continue;
+                    var kv = header.Split(new[] { ':' }, 2);
+                    string name = kv[0].Trim();
+                    Console.WriteLine($"\t{name}");
+                    if (name.Equals("authentication", StringComparison.OrdinalIgnoreCase)
+                        && kv[1].Trim().StartsWith("bearer", StringComparison.OrdinalIgnoreCase))
+                        Console.WriteLine($"\t\tWARNING: '{name}' header was provided, should that be 'Authorization'?");
+                    client.DefaultRequestHeaders.Add(name, kv[1].Trim());
+                }
+            }
+
+            var clientSettings = new FhirClientSettings { VerifyFhirVersion = false };
+            if (settings.OutputFormat == output_format.json)
+                clientSettings.PreferredFormat = ResourceFormat.Json;
+            else if (settings.OutputFormat == output_format.xml)
+                clientSettings.PreferredFormat = ResourceFormat.Xml;
+
+            return new FhirClient(new Uri(settings.ServerUrl), client, clientSettings);
         }
     }
 }
