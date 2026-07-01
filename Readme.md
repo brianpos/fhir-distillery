@@ -16,8 +16,9 @@ All of its settings are provided as command line parameters (rather than an `app
 In the future will probably adapt it to work on NDJSON files and live servers.
 
 ## Installation
+The package id is `brianpos.fhir-distillery`, and once installed the tool is run as `fhir-distillery`.
 ```
-dotnet tool install --global fhir-distillery
+dotnet tool install --global brianpos.fhir-distillery
 ```
 
 ## Usage

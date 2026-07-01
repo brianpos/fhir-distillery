@@ -35,5 +35,11 @@ jobs:
       - name: Pack
         run: dotnet pack fhir.distillery/fhir.distillery.csproj --configuration Release --no-build --output ${{ github.workspace }}/nupkg -p:Version=${{ steps.version.outputs.version }} -p:InformationalVersion=${{ steps.version.outputs.version }}+${{ github.sha }}
 
+      - name: Upload NuGet package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nupkg
+          path: ${{ github.workspace }}/nupkg/*.nupkg
+
       - name: Push to NuGet
         run: dotnet nuget push "${{ github.workspace }}/nupkg/*.nupkg" --api-key "${{ secrets.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
