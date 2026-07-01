@@ -36,45 +36,6 @@ namespace fhir_distillery
         string _outputProfileBaseUri;
         string _publisher;
 
-        public void DiscoverExtensions()
-        {
-            // Do ndjson too!
-            string exampleResourcesPath = @"C:\git\MySL.FhirIG\examples";
-            foreach (string file in Directory.EnumerateFiles(exampleResourcesPath, "*.xml", SearchOption.AllDirectories))
-            {
-                try
-                {
-                    var resource = new FhirXmlParser().Parse<Resource>(File.ReadAllText(file));
-                    System.Diagnostics.Trace.WriteLine($"{file} {resource.TypeName}/{resource.Id}");
-                    if (resource is Bundle bundle)
-                    {
-                        foreach (var entry in bundle.Entry.Select(e => e.Resource))
-                        {
-                            if (entry != null)
-                            {
-                                System.Diagnostics.Trace.WriteLine($"  -->{entry.TypeName}/{entry.Id}");
-                                ScanForExtensions(null, entry.ToTypedElement(), null);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        ScanForExtensions(null, resource.ToTypedElement(), null);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Trace.WriteLine($"{file}");
-                    System.Diagnostics.Trace.WriteLine($"  ==> Exception {ex.Message}");
-                }
-            }
-
-            // Next pass was to update the type profile - including the generated extensions.
-            // - while merging the profile
-            // -- if it is sliced, but not slice for the value, suggest a new one?
-            // -- with observations - based on a common profile, then train it on a folder to learn what they should look like
-        }
-
         public StructureDefinition CreateProfileWithAllMinZero(string canonicalUri, string newBase)
         {
             var realSD = sourceSD.ResolveByCanonicalUri(canonicalUri) as StructureDefinition;
