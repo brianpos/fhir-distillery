@@ -1,0 +1,93 @@
+{
+  "resourceType": "Questionnaire",
+  "id": "questionnaire-sdc-test-initialvalue-multiple",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-pop-exp"
+    ]
+  },
+  "extension": [
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/artifact-versionAlgorithm",
+      "valueCoding": {
+        "code": "semver",
+        "system": "http://hl7.org/fhir/version-algorithm"
+      }
+    }
+  ],
+  "item": [
+    {
+      "item": [
+        {
+          "initial": [
+            {
+              "valueCoding": {
+                "code": "Y",
+                "system": "http://terminology.hl7.org/CodeSystem/v2-0532",
+                "display": "Yes"
+              }
+            }
+          ],
+          "linkId": "1acf93a7-0890-44cd-be48-542defb35248",
+          "text": "Yes/No/Dont know/NA",
+          "type": "choice",
+          "repeats": true,
+          "answerValueSet": "http://terminology.hl7.org/ValueSet/yes-no-unknown-not-applicable"
+        },
+        {
+          "answerOption": [
+            {
+              "valueCoding": {
+                "code": "732409008",
+                "system": "http://snomed.info/sct",
+                "display": "1.1"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "732572001",
+                "system": "http://snomed.info/sct",
+                "display": "2.2"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "732646001",
+                "system": "http://snomed.info/sct",
+                "display": "3.3"
+              }
+            }
+          ],
+          "linkId": "5e1209b7-c9e0-4bf4-b228-c6533c892a3e",
+          "text": "Decimal Values Radio Buttons",
+          "type": "choice",
+          "repeats": false
+        },
+        {
+          "initial": [
+            {
+              "valueCoding": {
+                "code": "884001",
+                "system": "http://snomed.info/sct",
+                "display": "Initial"
+              }
+            }
+          ],
+          "linkId": "655219ed-5e8b-4111-9d49-b4fbc0b4f627",
+          "text": "Decimal Values Radio Buttons",
+          "type": "text",
+          "repeats": false
+        }
+      ],
+      "linkId": "02a7536f-06b2-4dee-94e1-f5cfcb0e8622",
+      "text": "Root Group",
+      "type": "group"
+    }
+  ],
+  "url": "http://hl7.org/fhir/uv/sdc/Questionnaire/questionnaire-sdc-test-initialvalue-multiple",
+  "name": "IVMultiple",
+  "title": "Multiple Initial Values",
+  "status": "active",
+  "experimental": true,
+  "description": "A Test form with a question that has multiple initial values"
+}

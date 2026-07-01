@@ -1,0 +1,185 @@
+{
+  "resourceType": "QuestionnaireResponse",
+  "id": "questionnaireresponse-sdc-profile-example-loinc",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaireresponse"
+    ]
+  },
+  "extension": [
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/workflow-adheresTo",
+      "valueReference": {
+        "reference": "\"http://example.org/ObservationDefinition/74080-3\""
+      }
+    }
+  ],
+  "item": [
+    {
+      "item": [
+        {
+          "answer": [
+            {
+              "valueString": "000"
+            }
+          ],
+          "linkId": "0",
+          "text": "Form ID:"
+        },
+        {
+          "answer": [
+            {
+              "valueString": "456"
+            }
+          ],
+          "linkId": "74080-3/74081-1",
+          "text": "Event ID:"
+        },
+        {
+          "answer": [
+            {
+              "valueString": "2016-03-14"
+            }
+          ],
+          "linkId": "74080-3/30947-6",
+          "text": "Initial Report Date (HERF Q1)"
+        }
+      ],
+      "linkId": "Medication/header"
+    },
+    {
+      "item": [
+        {
+          "item": [
+            {
+              "answer": [
+                {
+                  "item": [
+                    {
+                      "answer": [
+                        {
+                          "valueCoding": {
+                            "code": "LA20278-0",
+                            "system": "http://loinc.org",
+                            "display": "Prescription or over-the-counter (including herbal supplements)"
+                          }
+                        }
+                      ],
+                      "linkId": "74080-3/74075-3",
+                      "text": "What type of medication?"
+                    }
+                  ],
+                  "valueCoding": {
+                    "code": "LA20271-5",
+                    "system": "http://loinc.org",
+                    "display": "Medications"
+                  }
+                }
+              ],
+              "linkId": "74080-3/74076-1",
+              "text": "What type of medication/substance was involved?"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA20275-6",
+                    "system": "http://loinc.org",
+                    "display": "Incorrect action (process failure or error) (e.g., such as administering overdose or incorrect medication)"
+                  }
+                }
+              ],
+              "linkId": "74080-3/74072-0",
+              "text": "Which of the following best characterizes the event?"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA20276-4",
+                    "system": "http://loinc.org",
+                    "display": "Incorrect patient"
+                  }
+                }
+              ],
+              "linkId": "74080-3/74071-2",
+              "text": "What was the incorrect action?"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA20296-2",
+                    "system": "http://loinc.org",
+                    "display": "Administering"
+                  }
+                }
+              ],
+              "linkId": "74080-3/74063-9",
+              "text": "At what stage in the process did the event originate, regardless of the stage at which it was discovered?"
+            }
+          ],
+          "linkId": "Medication/SEC01/74080-3"
+        },
+        {
+          "item": [
+            {
+              "answer": [
+                {
+                  "valueString": "Acetaminophen"
+                }
+              ],
+              "linkId": "74080-3/74078-7/74062-1",
+              "text": "Generic name or investigational drug name"
+            },
+            {
+              "answer": [
+                {
+                  "valueString": "Tablet"
+                }
+              ],
+              "linkId": "74080-3/74078-7/74055-5",
+              "text": "Dosage form of Product"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA32-8",
+                    "system": "http://loinc.org",
+                    "display": "No"
+                  }
+                }
+              ],
+              "linkId": "74080-3/74078-7/74053-0",
+              "text": "Was this medication/substance prescribed for this patient?"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA33-6",
+                    "system": "http://loinc.org",
+                    "display": "Yes"
+                  }
+                }
+              ],
+              "linkId": "Medication/74052-2",
+              "text": "Was this medication/substance given to this patient?"
+            }
+          ],
+          "linkId": "74080-3/74078-7"
+        }
+      ],
+      "linkId": "Medication/SEC00",
+      "text": "Medication or Other Substance"
+    }
+  ],
+  "questionnaire": "http://hl7.org/fhir/uv/sdc/Questionnaire/questionnaire-sdc-profile-example-loinc|4.0.0-ballot",
+  "status": "completed",
+  "authored": "2016-03-14",
+  "subject": {
+    "reference": "http://example.org/Patient/123",
+    "display": "Jane Smith"
+  }
+}

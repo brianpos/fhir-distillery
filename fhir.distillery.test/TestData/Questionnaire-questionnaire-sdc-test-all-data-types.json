@@ -1,0 +1,150 @@
+{
+  "resourceType": "Questionnaire",
+  "id": "questionnaire-sdc-test-all-data-types",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire"
+    ]
+  },
+  "extension": [
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/artifact-versionAlgorithm",
+      "valueCoding": {
+        "code": "semver",
+        "system": "http://hl7.org/fhir/version-algorithm"
+      }
+    }
+  ],
+  "item": [
+    {
+      "item": [
+        {
+          "linkId": "id-string",
+          "text": "string control",
+          "type": "string"
+        },
+        {
+          "linkId": "1acf93a7-0890-44cd-be48-542defb35248",
+          "text": "This is a display field and should expand to both left and right",
+          "type": "display"
+        },
+        {
+          "linkId": "9acf93a7-0890-44cd-be48-542defb35223",
+          "text": "this is a string with markdown emphasis",
+          "_text": {
+            "extension": [
+              {
+                "url": "http://hl7.org/fhir/StructureDefinition/rendering-markdown",
+                "valueMarkdown": "this is a **string** with markdown emphasis"
+              }
+            ]
+          },
+          "type": "display"
+        },
+        {
+          "linkId": "id-text",
+          "text": "text control - string but for expected larger content entered (usually handles multi-line)",
+          "type": "text"
+        },
+        {
+          "linkId": "id-boolean",
+          "text": "boolean",
+          "type": "boolean"
+        },
+        {
+          "linkId": "id-date",
+          "text": "date only control",
+          "type": "date"
+        },
+        {
+          "linkId": "id-datetime",
+          "text": "date and time control",
+          "type": "dateTime"
+        },
+        {
+          "linkId": "id-time",
+          "text": "time only control",
+          "type": "time"
+        },
+        {
+          "linkId": "id-integer",
+          "text": "integer",
+          "type": "integer"
+        },
+        {
+          "linkId": "id-decimal",
+          "text": "decimal",
+          "type": "decimal"
+        },
+        {
+          "linkId": "id-attachment",
+          "text": "attachment to be included",
+          "type": "attachment"
+        },
+        {
+          "linkId": "id-choice",
+          "text": "radiobuttons",
+          "type": "choice",
+          "repeats": false,
+          "answerValueSet": "http://terminology.hl7.org/ValueSet/gender-identity"
+        },
+        {
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+              "valueCodeableConcept": {
+                "coding": [
+                  {
+                    "code": "drop-down",
+                    "system": "http://hl7.org/fhir/questionnaire-item-control"
+                  }
+                ]
+              }
+            }
+          ],
+          "linkId": "440f8cc6-3ea2-40c2-b03a-d03187131fd3",
+          "text": "ddl (gender)",
+          "type": "choice",
+          "repeats": false,
+          "answerValueSet": "http://terminology.hl7.org/ValueSet/gender-identity"
+        },
+        {
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl",
+              "valueCodeableConcept": {
+                "coding": [
+                  {
+                    "code": "autocomplete",
+                    "system": "http://hl7.org/fhir/questionnaire-item-control"
+                  }
+                ]
+              }
+            }
+          ],
+          "linkId": "06aaa075-86e4-4cf2-a1ef-a86ab10e86e9",
+          "text": "autocomplete (countries)",
+          "type": "choice",
+          "repeats": false,
+          "answerValueSet": "http://terminology.hl7.org/ValueSet/v3-Country2"
+        },
+        {
+          "linkId": "EF8E3936-3246-4B3E-A46C-9FDAA5ACB635",
+          "text": "open-choice (countries)",
+          "type": "open-choice",
+          "repeats": false,
+          "answerValueSet": "http://terminology.hl7.org/ValueSet/v3-Country2"
+        }
+      ],
+      "linkId": "02a7536f-06b2-4dee-94e1-f5cfcb0e8622",
+      "text": "Bit of everything - data types",
+      "type": "group"
+    }
+  ],
+  "url": "http://hl7.org/fhir/uv/sdc/Questionnaire/questionnaire-sdc-test-all-data-types",
+  "name": "AllDataTypes",
+  "title": "Bit of everything",
+  "status": "active",
+  "experimental": true,
+  "description": "A test form that has one of each data type included, useful when testing"
+}

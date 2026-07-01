@@ -1,0 +1,97 @@
+{
+  "resourceType": "Questionnaire",
+  "id": "questionnaire-sdc-test-required-radios",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-behave"
+    ]
+  },
+  "extension": [
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/artifact-versionAlgorithm",
+      "valueCoding": {
+        "code": "semver",
+        "system": "http://hl7.org/fhir/version-algorithm"
+      }
+    }
+  ],
+  "item": [
+    {
+      "item": [
+        {
+          "linkId": "textq",
+          "text": "Should I stay text?",
+          "type": "string",
+          "required": true
+        },
+        {
+          "linkId": "radio",
+          "text": "Should I stay?",
+          "type": "choice",
+          "required": true,
+          "answerValueSet": "http://terminology.hl7.org/ValueSet/yes-no-unknown-not-applicable"
+        },
+        {
+          "answerOption": [
+            {
+              "valueCoding": {
+                "code": "1",
+                "system": "http://example.org",
+                "display": "One"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "2",
+                "system": "http://example.org",
+                "display": "Two"
+              }
+            }
+          ],
+          "linkId": "radio2",
+          "text": "Should I go now?",
+          "type": "choice",
+          "required": true
+        },
+        {
+          "answerOption": [
+            {
+              "valueCoding": {
+                "code": "1",
+                "system": "http://example.org",
+                "display": "One"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "2",
+                "system": "http://example.org",
+                "display": "Two"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "3",
+                "system": "http://example.org",
+                "display": "Three"
+              }
+            }
+          ],
+          "linkId": "radio3",
+          "text": "Will there be trouble?",
+          "type": "choice",
+          "required": true
+        }
+      ],
+      "linkId": "grp",
+      "text": "Test: Required Radio Buttons",
+      "type": "group"
+    }
+  ],
+  "url": "http://hl7.org/fhir/uv/sdc/Questionnaire/questionnaire-sdc-test-required-radios",
+  "name": "RequiredRadioButtons",
+  "title": "Required Radio Buttons",
+  "status": "active",
+  "experimental": true,
+  "description": "A Test form with required fields"
+}

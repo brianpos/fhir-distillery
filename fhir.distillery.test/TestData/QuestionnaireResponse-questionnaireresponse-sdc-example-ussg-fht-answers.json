@@ -1,0 +1,2258 @@
+{
+  "resourceType": "QuestionnaireResponse",
+  "id": "questionnaireresponse-sdc-example-ussg-fht-answers",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaireresponse"
+    ]
+  },
+  "item": [
+    {
+      "item": [
+        {
+          "answer": [
+            {
+              "valueDate": "2008-01-17"
+            }
+          ],
+          "linkId": "0.1",
+          "text": "Date Done"
+        }
+      ],
+      "linkId": "0"
+    },
+    {
+      "item": [
+        {
+          "item": [
+            {
+              "answer": [
+                {
+                  "valueString": "Annie Proband"
+                }
+              ],
+              "linkId": "1.1.1",
+              "text": "Name"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA3-6",
+                    "system": "http://loinc.org",
+                    "display": "Female"
+                  }
+                }
+              ],
+              "linkId": "1.1.2",
+              "text": "Gender"
+            },
+            {
+              "answer": [
+                {
+                  "valueDate": "1966-04-04"
+                }
+              ],
+              "linkId": "1.1.3",
+              "text": "Date of Birth"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA32-8",
+                    "system": "http://loinc.org",
+                    "display": "No"
+                  }
+                }
+              ],
+              "linkId": "1.1.4",
+              "text": "Were you born a twin?"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA32-8",
+                    "system": "http://loinc.org",
+                    "display": "No"
+                  }
+                }
+              ],
+              "linkId": "1.1.5",
+              "text": "Were you adopted?"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA32-8",
+                    "system": "http://loinc.org",
+                    "display": "No"
+                  }
+                }
+              ],
+              "linkId": "1.1.6",
+              "text": "Are your parents related to each other in any way other than marriage?"
+            },
+            {
+              "answer": [
+                {
+                  "item": [
+                    {
+                      "answer": [
+                        {
+                          "valueCoding": {
+                            "code": "[in_i]",
+                            "system": "http://unitsofmeasure.org",
+                            "display": "[in_i]"
+                          }
+                        }
+                      ],
+                      "linkId": "1.1.7.1.1",
+                      "text": "Units"
+                    }
+                  ],
+                  "valueDecimal": 63
+                }
+              ],
+              "linkId": "1.1.7",
+              "text": "Height"
+            },
+            {
+              "answer": [
+                {
+                  "item": [
+                    {
+                      "answer": [
+                        {
+                          "valueCoding": {
+                            "code": "[lb_av]",
+                            "system": "http://unitsofmeasure.org",
+                            "display": "[lb_av]"
+                          }
+                        }
+                      ],
+                      "linkId": "1.1.8.1.1",
+                      "text": "Units"
+                    }
+                  ],
+                  "valueDecimal": 127
+                }
+              ],
+              "linkId": "1.1.8",
+              "text": "Weight"
+            },
+            {
+              "answer": [
+                {
+                  "valueDecimal": 22.5
+                }
+              ],
+              "linkId": "1.1.9",
+              "text": "Body mass index (BMI) [Ratio]"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA4457-3",
+                    "system": "http://loinc.org",
+                    "display": "White"
+                  }
+                }
+              ],
+              "linkId": "1.1.10",
+              "text": "Race"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA4611-5",
+                    "system": "http://loinc.org",
+                    "display": "Mexican"
+                  }
+                },
+                {
+                  "valueCoding": {
+                    "code": "LA10606-4",
+                    "system": "http://loinc.org",
+                    "display": "South American"
+                  }
+                }
+              ],
+              "linkId": "1.1.11",
+              "text": "Ethnicity"
+            }
+          ],
+          "linkId": "1.1"
+        }
+      ],
+      "linkId": "1",
+      "text": "Your health information"
+    },
+    {
+      "item": [
+        {
+          "item": [
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA10405-1",
+                    "system": "http://loinc.org",
+                    "display": "Daughter"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.1",
+              "text": "Relationship to you"
+            },
+            {
+              "answer": [
+                {
+                  "valueString": "Susan"
+                }
+              ],
+              "linkId": "2.1.1.2",
+              "text": "Name"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA3-6",
+                    "system": "http://loinc.org",
+                    "display": "Female"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.3",
+              "text": "Gender"
+            },
+            {
+              "answer": [
+                {
+                  "item": [
+                    {
+                      "item": [
+                        {
+                          "answer": [
+                            {
+                              "valueDecimal": 17
+                            }
+                          ],
+                          "linkId": "2.1.1.4.2.2",
+                          "text": "Age"
+                        }
+                      ],
+                      "linkId": "2.1.1.4.2"
+                    }
+                  ],
+                  "valueCoding": {
+                    "code": "LA33-6",
+                    "system": "http://loinc.org",
+                    "display": "Yes"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.4",
+              "text": "Living?"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA32-8",
+                    "system": "http://loinc.org",
+                    "display": "No"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.5",
+              "text": "Was this person born a twin?"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA32-8",
+                    "system": "http://loinc.org",
+                    "display": "No"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.6",
+              "text": "Was this person adopted?"
+            }
+          ],
+          "linkId": "2.1.1"
+        }
+      ],
+      "linkId": "2",
+      "text": "Family member health information"
+    },
+    {
+      "item": [
+        {
+          "item": [
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA10415-0",
+                    "system": "http://loinc.org",
+                    "display": "Brother"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.1",
+              "text": "Relationship to you"
+            },
+            {
+              "answer": [
+                {
+                  "valueString": "Brian"
+                }
+              ],
+              "linkId": "2.1.1.2",
+              "text": "Name"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA2-8",
+                    "system": "http://loinc.org",
+                    "display": "Male"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.3",
+              "text": "Gender"
+            },
+            {
+              "answer": [
+                {
+                  "item": [
+                    {
+                      "item": [
+                        {
+                          "answer": [
+                            {
+                              "valueDecimal": 32
+                            }
+                          ],
+                          "linkId": "2.1.1.4.2.2",
+                          "text": "Age"
+                        }
+                      ],
+                      "linkId": "2.1.1.4.2"
+                    }
+                  ],
+                  "valueCoding": {
+                    "code": "LA33-6",
+                    "system": "http://loinc.org",
+                    "display": "Yes"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.4",
+              "text": "Living?"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA32-8",
+                    "system": "http://loinc.org",
+                    "display": "No"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.5",
+              "text": "Was this person born a twin?"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA32-8",
+                    "system": "http://loinc.org",
+                    "display": "No"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.6",
+              "text": "Was this person adopted?"
+            }
+          ],
+          "linkId": "2.1.1"
+        },
+        {
+          "item": [
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA14284-6",
+                    "system": "http://loinc.org",
+                    "display": "Other Cancer"
+                  }
+                }
+              ],
+              "linkId": "2.1.2.1",
+              "text": "Disease or Condition"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA10397-0",
+                    "system": "http://loinc.org",
+                    "display": "30-39"
+                  }
+                }
+              ],
+              "linkId": "2.1.2.2",
+              "text": "Age at Diagnosis"
+            }
+          ],
+          "linkId": "2.1.2",
+          "text": "This family member's history of disease"
+        }
+      ],
+      "linkId": "2",
+      "text": "Family member health information"
+    },
+    {
+      "item": [
+        {
+          "item": [
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA10418-4",
+                    "system": "http://loinc.org",
+                    "display": "Sister"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.1",
+              "text": "Relationship to you"
+            },
+            {
+              "answer": [
+                {
+                  "valueString": "Janet"
+                }
+              ],
+              "linkId": "2.1.1.2",
+              "text": "Name"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA3-6",
+                    "system": "http://loinc.org",
+                    "display": "Female"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.3",
+              "text": "Gender"
+            },
+            {
+              "answer": [
+                {
+                  "item": [
+                    {
+                      "item": [
+                        {
+                          "answer": [
+                            {
+                              "valueDecimal": 36
+                            }
+                          ],
+                          "linkId": "2.1.1.4.2.2",
+                          "text": "Age"
+                        }
+                      ],
+                      "linkId": "2.1.1.4.2"
+                    }
+                  ],
+                  "valueCoding": {
+                    "code": "LA33-6",
+                    "system": "http://loinc.org",
+                    "display": "Yes"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.4",
+              "text": "Living?"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA32-8",
+                    "system": "http://loinc.org",
+                    "display": "No"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.5",
+              "text": "Was this person born a twin?"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA32-8",
+                    "system": "http://loinc.org",
+                    "display": "No"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.6",
+              "text": "Was this person adopted?"
+            }
+          ],
+          "linkId": "2.1.1"
+        },
+        {
+          "item": [
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA14283-8",
+                    "system": "http://loinc.org",
+                    "display": "Breast Cancer"
+                  }
+                }
+              ],
+              "linkId": "2.1.2.1",
+              "text": "Disease or Condition"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA10397-0",
+                    "system": "http://loinc.org",
+                    "display": "30-39"
+                  }
+                }
+              ],
+              "linkId": "2.1.2.2",
+              "text": "Age at Diagnosis"
+            }
+          ],
+          "linkId": "2.1.2",
+          "text": "This family member's history of disease"
+        }
+      ],
+      "linkId": "2",
+      "text": "Family member health information"
+    },
+    {
+      "item": [
+        {
+          "item": [
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA10419-2",
+                    "system": "http://loinc.org",
+                    "display": "Nephew"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.1",
+              "text": "Relationship to you"
+            },
+            {
+              "answer": [
+                {
+                  "valueString": "Ian"
+                }
+              ],
+              "linkId": "2.1.1.2",
+              "text": "Name"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA2-8",
+                    "system": "http://loinc.org",
+                    "display": "Male"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.3",
+              "text": "Gender"
+            },
+            {
+              "answer": [
+                {
+                  "item": [
+                    {
+                      "item": [
+                        {
+                          "answer": [
+                            {
+                              "valueDecimal": 16
+                            }
+                          ],
+                          "linkId": "2.1.1.4.2.2",
+                          "text": "Age"
+                        }
+                      ],
+                      "linkId": "2.1.1.4.2"
+                    }
+                  ],
+                  "valueCoding": {
+                    "code": "LA33-6",
+                    "system": "http://loinc.org",
+                    "display": "Yes"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.4",
+              "text": "Living?"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA32-8",
+                    "system": "http://loinc.org",
+                    "display": "No"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.5",
+              "text": "Was this person born a twin?"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA32-8",
+                    "system": "http://loinc.org",
+                    "display": "No"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.6",
+              "text": "Was this person adopted?"
+            }
+          ],
+          "linkId": "2.1.1"
+        }
+      ],
+      "linkId": "2",
+      "text": "Family member health information"
+    },
+    {
+      "item": [
+        {
+          "item": [
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA10420-0",
+                    "system": "http://loinc.org",
+                    "display": "Niece"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.1",
+              "text": "Relationship to you"
+            },
+            {
+              "answer": [
+                {
+                  "valueString": "Helen"
+                }
+              ],
+              "linkId": "2.1.1.2",
+              "text": "Name"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA3-6",
+                    "system": "http://loinc.org",
+                    "display": "Female"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.3",
+              "text": "Gender"
+            },
+            {
+              "answer": [
+                {
+                  "item": [
+                    {
+                      "item": [
+                        {
+                          "answer": [
+                            {
+                              "valueDecimal": 15
+                            }
+                          ],
+                          "linkId": "2.1.1.4.2.2",
+                          "text": "Age"
+                        }
+                      ],
+                      "linkId": "2.1.1.4.2"
+                    }
+                  ],
+                  "valueCoding": {
+                    "code": "LA33-6",
+                    "system": "http://loinc.org",
+                    "display": "Yes"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.4",
+              "text": "Living?"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA32-8",
+                    "system": "http://loinc.org",
+                    "display": "No"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.5",
+              "text": "Was this person born a twin?"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA32-8",
+                    "system": "http://loinc.org",
+                    "display": "No"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.6",
+              "text": "Was this person adopted?"
+            }
+          ],
+          "linkId": "2.1.1"
+        }
+      ],
+      "linkId": "2",
+      "text": "Family member health information"
+    },
+    {
+      "item": [
+        {
+          "item": [
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA10416-8",
+                    "system": "http://loinc.org",
+                    "display": "Father"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.1",
+              "text": "Relationship to you"
+            },
+            {
+              "answer": [
+                {
+                  "valueString": "Donald"
+                }
+              ],
+              "linkId": "2.1.1.2",
+              "text": "Name"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA2-8",
+                    "system": "http://loinc.org",
+                    "display": "Male"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.3",
+              "text": "Gender"
+            },
+            {
+              "answer": [
+                {
+                  "item": [
+                    {
+                      "item": [
+                        {
+                          "answer": [
+                            {
+                              "valueDecimal": 52
+                            }
+                          ],
+                          "linkId": "2.1.1.4.2.2",
+                          "text": "Age"
+                        }
+                      ],
+                      "linkId": "2.1.1.4.2"
+                    }
+                  ],
+                  "valueCoding": {
+                    "code": "LA33-6",
+                    "system": "http://loinc.org",
+                    "display": "Yes"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.4",
+              "text": "Living?"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA32-8",
+                    "system": "http://loinc.org",
+                    "display": "No"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.5",
+              "text": "Was this person born a twin?"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA32-8",
+                    "system": "http://loinc.org",
+                    "display": "No"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.6",
+              "text": "Was this person adopted?"
+            }
+          ],
+          "linkId": "2.1.1"
+        }
+      ],
+      "linkId": "2",
+      "text": "Family member health information"
+    },
+    {
+      "item": [
+        {
+          "item": [
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA10425-9",
+                    "system": "http://loinc.org",
+                    "display": "Paternal Uncle"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.1",
+              "text": "Relationship to you"
+            },
+            {
+              "answer": [
+                {
+                  "valueString": "Eric"
+                }
+              ],
+              "linkId": "2.1.1.2",
+              "text": "Name"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA2-8",
+                    "system": "http://loinc.org",
+                    "display": "Male"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.3",
+              "text": "Gender"
+            },
+            {
+              "answer": [
+                {
+                  "item": [
+                    {
+                      "item": [
+                        {
+                          "answer": [
+                            {
+                              "valueDecimal": 56
+                            }
+                          ],
+                          "linkId": "2.1.1.4.2.2",
+                          "text": "Age"
+                        }
+                      ],
+                      "linkId": "2.1.1.4.2"
+                    }
+                  ],
+                  "valueCoding": {
+                    "code": "LA33-6",
+                    "system": "http://loinc.org",
+                    "display": "Yes"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.4",
+              "text": "Living?"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA32-8",
+                    "system": "http://loinc.org",
+                    "display": "No"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.5",
+              "text": "Was this person born a twin?"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA32-8",
+                    "system": "http://loinc.org",
+                    "display": "No"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.6",
+              "text": "Was this person adopted?"
+            }
+          ],
+          "linkId": "2.1.1"
+        }
+      ],
+      "linkId": "2",
+      "text": "Family member health information"
+    },
+    {
+      "item": [
+        {
+          "item": [
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA10421-8",
+                    "system": "http://loinc.org",
+                    "display": "Paternal Aunt"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.1",
+              "text": "Relationship to you"
+            },
+            {
+              "answer": [
+                {
+                  "valueString": "Fiona"
+                }
+              ],
+              "linkId": "2.1.1.2",
+              "text": "Name"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA3-6",
+                    "system": "http://loinc.org",
+                    "display": "Female"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.3",
+              "text": "Gender"
+            },
+            {
+              "answer": [
+                {
+                  "item": [
+                    {
+                      "item": [
+                        {
+                          "answer": [
+                            {
+                              "valueDecimal": 57
+                            }
+                          ],
+                          "linkId": "2.1.1.4.2.2",
+                          "text": "Age"
+                        }
+                      ],
+                      "linkId": "2.1.1.4.2"
+                    }
+                  ],
+                  "valueCoding": {
+                    "code": "LA33-6",
+                    "system": "http://loinc.org",
+                    "display": "Yes"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.4",
+              "text": "Living?"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA32-8",
+                    "system": "http://loinc.org",
+                    "display": "No"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.5",
+              "text": "Was this person born a twin?"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA32-8",
+                    "system": "http://loinc.org",
+                    "display": "No"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.6",
+              "text": "Was this person adopted?"
+            }
+          ],
+          "linkId": "2.1.1"
+        },
+        {
+          "item": [
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA10543-9",
+                    "system": "http://loinc.org",
+                    "display": "Skin Cancer"
+                  }
+                }
+              ],
+              "linkId": "2.1.2.1",
+              "text": "Disease or Condition"
+            }
+          ],
+          "linkId": "2.1.2",
+          "text": "This family member's history of disease"
+        }
+      ],
+      "linkId": "2",
+      "text": "Family member health information"
+    },
+    {
+      "item": [
+        {
+          "item": [
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA10423-4",
+                    "system": "http://loinc.org",
+                    "display": "Paternal Grandfather"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.1",
+              "text": "Relationship to you"
+            },
+            {
+              "answer": [
+                {
+                  "valueString": "Bob"
+                }
+              ],
+              "linkId": "2.1.1.2",
+              "text": "Name"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA2-8",
+                    "system": "http://loinc.org",
+                    "display": "Male"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.3",
+              "text": "Gender"
+            },
+            {
+              "answer": [
+                {
+                  "item": [
+                    {
+                      "item": [
+                        {
+                          "answer": [
+                            {
+                              "valueCoding": {
+                                "code": "LA10537-1",
+                                "system": "http://loinc.org",
+                                "display": "Colon Cancer"
+                              }
+                            }
+                          ],
+                          "linkId": "2.1.1.4.1.1",
+                          "text": "Cause of Death"
+                        },
+                        {
+                          "answer": [
+                            {
+                              "valueCoding": {
+                                "code": "LA10400-2",
+                                "system": "http://loinc.org",
+                                "display": "OVER 60"
+                              }
+                            }
+                          ],
+                          "linkId": "2.1.1.4.1.2",
+                          "text": "Age at Death"
+                        }
+                      ],
+                      "linkId": "2.1.1.4.1"
+                    }
+                  ],
+                  "valueCoding": {
+                    "code": "LA32-8",
+                    "system": "http://loinc.org",
+                    "display": "No"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.4",
+              "text": "Living?"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA32-8",
+                    "system": "http://loinc.org",
+                    "display": "No"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.5",
+              "text": "Was this person born a twin?"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA32-8",
+                    "system": "http://loinc.org",
+                    "display": "No"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.6",
+              "text": "Was this person adopted?"
+            }
+          ],
+          "linkId": "2.1.1"
+        },
+        {
+          "item": [
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA10537-1",
+                    "system": "http://loinc.org",
+                    "display": "Colon Cancer"
+                  }
+                }
+              ],
+              "linkId": "2.1.2.1",
+              "text": "Disease or Condition"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA10400-2",
+                    "system": "http://loinc.org",
+                    "display": "OVER 60"
+                  }
+                }
+              ],
+              "linkId": "2.1.2.2",
+              "text": "Age at Diagnosis"
+            }
+          ],
+          "linkId": "2.1.2",
+          "text": "This family member's history of disease"
+        }
+      ],
+      "linkId": "2",
+      "text": "Family member health information"
+    },
+    {
+      "item": [
+        {
+          "item": [
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA10424-2",
+                    "system": "http://loinc.org",
+                    "display": "Paternal Grandmother"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.1",
+              "text": "Relationship to you"
+            },
+            {
+              "answer": [
+                {
+                  "valueString": "Claire"
+                }
+              ],
+              "linkId": "2.1.1.2",
+              "text": "Name"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA3-6",
+                    "system": "http://loinc.org",
+                    "display": "Female"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.3",
+              "text": "Gender"
+            },
+            {
+              "answer": [
+                {
+                  "item": [
+                    {
+                      "item": [
+                        {
+                          "answer": [
+                            {
+                              "item": [
+                                {
+                                  "answer": [
+                                    {
+                                      "valueString": "Lou Gehrigs"
+                                    }
+                                  ],
+                                  "linkId": "2.1.1.4.1.1.1",
+                                  "text": "Please specify"
+                                }
+                              ],
+                              "valueCoding": {
+                                "code": "LA10589-2",
+                                "system": "http://loinc.org",
+                                "display": "Other/Unexpected"
+                              }
+                            }
+                          ],
+                          "linkId": "2.1.1.4.1.1",
+                          "text": "Cause of Death"
+                        },
+                        {
+                          "answer": [
+                            {
+                              "valueCoding": {
+                                "code": "LA10400-2",
+                                "system": "http://loinc.org",
+                                "display": "OVER 60"
+                              }
+                            }
+                          ],
+                          "linkId": "2.1.1.4.1.2",
+                          "text": "Age at Death"
+                        }
+                      ],
+                      "linkId": "2.1.1.4.1"
+                    }
+                  ],
+                  "valueCoding": {
+                    "code": "LA32-8",
+                    "system": "http://loinc.org",
+                    "display": "No"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.4",
+              "text": "Living?"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA32-8",
+                    "system": "http://loinc.org",
+                    "display": "No"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.5",
+              "text": "Was this person born a twin?"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA32-8",
+                    "system": "http://loinc.org",
+                    "display": "No"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.6",
+              "text": "Was this person adopted?"
+            }
+          ],
+          "linkId": "2.1.1"
+        }
+      ],
+      "linkId": "2",
+      "text": "Family member health information"
+    },
+    {
+      "item": [
+        {
+          "item": [
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA10417-6",
+                    "system": "http://loinc.org",
+                    "display": "Mother"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.1",
+              "text": "Relationship to you"
+            },
+            {
+              "answer": [
+                {
+                  "valueString": "Harriet"
+                }
+              ],
+              "linkId": "2.1.1.2",
+              "text": "Name"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA3-6",
+                    "system": "http://loinc.org",
+                    "display": "Female"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.3",
+              "text": "Gender"
+            },
+            {
+              "answer": [
+                {
+                  "item": [
+                    {
+                      "item": [
+                        {
+                          "answer": [
+                            {
+                              "valueCoding": {
+                                "code": "LA15682-0",
+                                "system": "http://loinc.org",
+                                "display": "Ovarian Cancer"
+                              }
+                            }
+                          ],
+                          "linkId": "2.1.1.4.1.1",
+                          "text": "Cause of Death"
+                        },
+                        {
+                          "answer": [
+                            {
+                              "valueCoding": {
+                                "code": "LA10399-6",
+                                "system": "http://loinc.org",
+                                "display": "50-59"
+                              }
+                            }
+                          ],
+                          "linkId": "2.1.1.4.1.2",
+                          "text": "Age at Death"
+                        }
+                      ],
+                      "linkId": "2.1.1.4.1"
+                    }
+                  ],
+                  "valueCoding": {
+                    "code": "LA32-8",
+                    "system": "http://loinc.org",
+                    "display": "No"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.4",
+              "text": "Living?"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA32-8",
+                    "system": "http://loinc.org",
+                    "display": "No"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.5",
+              "text": "Was this person born a twin?"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA32-8",
+                    "system": "http://loinc.org",
+                    "display": "No"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.6",
+              "text": "Was this person adopted?"
+            }
+          ],
+          "linkId": "2.1.1"
+        },
+        {
+          "item": [
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA15682-0",
+                    "system": "http://loinc.org",
+                    "display": "Ovarian Cancer"
+                  }
+                }
+              ],
+              "linkId": "2.1.2.1",
+              "text": "Disease or Condition"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA10398-8",
+                    "system": "http://loinc.org",
+                    "display": "40-49"
+                  }
+                }
+              ],
+              "linkId": "2.1.2.2",
+              "text": "Age at Diagnosis"
+            }
+          ],
+          "linkId": "2.1.2",
+          "text": "This family member's history of disease"
+        }
+      ],
+      "linkId": "2",
+      "text": "Family member health information"
+    },
+    {
+      "item": [
+        {
+          "item": [
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA10414-3",
+                    "system": "http://loinc.org",
+                    "display": "Maternal Uncle"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.1",
+              "text": "Relationship to you"
+            },
+            {
+              "answer": [
+                {
+                  "valueString": "Rudy"
+                }
+              ],
+              "linkId": "2.1.1.2",
+              "text": "Name"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA2-8",
+                    "system": "http://loinc.org",
+                    "display": "Male"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.3",
+              "text": "Gender"
+            },
+            {
+              "answer": [
+                {
+                  "item": [
+                    {
+                      "item": [
+                        {
+                          "answer": [
+                            {
+                              "valueDecimal": 60
+                            }
+                          ],
+                          "linkId": "2.1.1.4.2.2",
+                          "text": "Age"
+                        }
+                      ],
+                      "linkId": "2.1.1.4.2"
+                    }
+                  ],
+                  "valueCoding": {
+                    "code": "LA33-6",
+                    "system": "http://loinc.org",
+                    "display": "Yes"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.4",
+              "text": "Living?"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA32-8",
+                    "system": "http://loinc.org",
+                    "display": "No"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.5",
+              "text": "Was this person born a twin?"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA32-8",
+                    "system": "http://loinc.org",
+                    "display": "No"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.6",
+              "text": "Was this person adopted?"
+            }
+          ],
+          "linkId": "2.1.1"
+        }
+      ],
+      "linkId": "2",
+      "text": "Family member health information"
+    },
+    {
+      "item": [
+        {
+          "item": [
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA10410-1",
+                    "system": "http://loinc.org",
+                    "display": "Maternal Aunt"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.1",
+              "text": "Relationship to you"
+            },
+            {
+              "answer": [
+                {
+                  "valueString": "Julie"
+                }
+              ],
+              "linkId": "2.1.1.2",
+              "text": "Name"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA3-6",
+                    "system": "http://loinc.org",
+                    "display": "Female"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.3",
+              "text": "Gender"
+            },
+            {
+              "answer": [
+                {
+                  "item": [
+                    {
+                      "item": [
+                        {
+                          "answer": [
+                            {
+                              "valueDecimal": 57
+                            }
+                          ],
+                          "linkId": "2.1.1.4.2.2",
+                          "text": "Age"
+                        }
+                      ],
+                      "linkId": "2.1.1.4.2"
+                    }
+                  ],
+                  "valueCoding": {
+                    "code": "LA33-6",
+                    "system": "http://loinc.org",
+                    "display": "Yes"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.4",
+              "text": "Living?"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA32-8",
+                    "system": "http://loinc.org",
+                    "display": "No"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.5",
+              "text": "Was this person born a twin?"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA32-8",
+                    "system": "http://loinc.org",
+                    "display": "No"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.6",
+              "text": "Was this person adopted?"
+            }
+          ],
+          "linkId": "2.1.1"
+        }
+      ],
+      "linkId": "2",
+      "text": "Family member health information"
+    },
+    {
+      "item": [
+        {
+          "item": [
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA10412-7",
+                    "system": "http://loinc.org",
+                    "display": "Maternal Grandfather"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.1",
+              "text": "Relationship to you"
+            },
+            {
+              "answer": [
+                {
+                  "valueString": "Ian"
+                }
+              ],
+              "linkId": "2.1.1.2",
+              "text": "Name"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA2-8",
+                    "system": "http://loinc.org",
+                    "display": "Male"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.3",
+              "text": "Gender"
+            },
+            {
+              "answer": [
+                {
+                  "item": [
+                    {
+                      "item": [
+                        {
+                          "answer": [
+                            {
+                              "valueCoding": {
+                                "code": "LA16286-9",
+                                "system": "http://loinc.org",
+                                "display": "Heart attack"
+                              }
+                            }
+                          ],
+                          "linkId": "2.1.1.4.1.1",
+                          "text": "Cause of Death"
+                        },
+                        {
+                          "answer": [
+                            {
+                              "valueCoding": {
+                                "code": "LA10400-2",
+                                "system": "http://loinc.org",
+                                "display": "OVER 60"
+                              }
+                            }
+                          ],
+                          "linkId": "2.1.1.4.1.2",
+                          "text": "Age at Death"
+                        }
+                      ],
+                      "linkId": "2.1.1.4.1"
+                    }
+                  ],
+                  "valueCoding": {
+                    "code": "LA32-8",
+                    "system": "http://loinc.org",
+                    "display": "No"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.4",
+              "text": "Living?"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA32-8",
+                    "system": "http://loinc.org",
+                    "display": "No"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.5",
+              "text": "Was this person born a twin?"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA32-8",
+                    "system": "http://loinc.org",
+                    "display": "No"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.6",
+              "text": "Was this person adopted?"
+            }
+          ],
+          "linkId": "2.1.1"
+        }
+      ],
+      "linkId": "2",
+      "text": "Family member health information"
+    },
+    {
+      "item": [
+        {
+          "item": [
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA10413-5",
+                    "system": "http://loinc.org",
+                    "display": "Maternal Grandmother"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.1",
+              "text": "Relationship to you"
+            },
+            {
+              "answer": [
+                {
+                  "valueString": "Gladys"
+                }
+              ],
+              "linkId": "2.1.1.2",
+              "text": "Name"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA3-6",
+                    "system": "http://loinc.org",
+                    "display": "Female"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.3",
+              "text": "Gender"
+            },
+            {
+              "answer": [
+                {
+                  "item": [
+                    {
+                      "item": [
+                        {
+                          "answer": [
+                            {
+                              "valueCoding": {
+                                "code": "LA10589-2",
+                                "system": "http://loinc.org",
+                                "display": "Other/Unexpected"
+                              }
+                            }
+                          ],
+                          "linkId": "2.1.1.4.1.1",
+                          "text": "Cause of Death"
+                        },
+                        {
+                          "answer": [
+                            {
+                              "valueCoding": {
+                                "code": "LA10400-2",
+                                "system": "http://loinc.org",
+                                "display": "OVER 60"
+                              }
+                            }
+                          ],
+                          "linkId": "2.1.1.4.1.2",
+                          "text": "Age at Death"
+                        }
+                      ],
+                      "linkId": "2.1.1.4.1"
+                    }
+                  ],
+                  "valueCoding": {
+                    "code": "LA32-8",
+                    "system": "http://loinc.org",
+                    "display": "No"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.4",
+              "text": "Living?"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA32-8",
+                    "system": "http://loinc.org",
+                    "display": "No"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.5",
+              "text": "Was this person born a twin?"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA32-8",
+                    "system": "http://loinc.org",
+                    "display": "No"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.6",
+              "text": "Was this person adopted?"
+            }
+          ],
+          "linkId": "2.1.1"
+        },
+        {
+          "item": [
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA14283-8",
+                    "system": "http://loinc.org",
+                    "display": "Breast Cancer"
+                  }
+                }
+              ],
+              "linkId": "2.1.2.1",
+              "text": "Disease or Condition"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA10399-6",
+                    "system": "http://loinc.org",
+                    "display": "50-59"
+                  }
+                }
+              ],
+              "linkId": "2.1.2.2",
+              "text": "Age at Diagnosis"
+            }
+          ],
+          "linkId": "2.1.2",
+          "text": "This family member's history of disease"
+        },
+        {
+          "item": [
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA16982-3",
+                    "system": "http://loinc.org",
+                    "display": "Asthma"
+                  }
+                }
+              ],
+              "linkId": "2.1.2.1",
+              "text": "Disease or Condition"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA10395-4",
+                    "system": "http://loinc.org",
+                    "display": "Childhood"
+                  }
+                }
+              ],
+              "linkId": "2.1.2.2",
+              "text": "Age at Diagnosis"
+            }
+          ],
+          "linkId": "2.1.2",
+          "text": "This family member's history of disease"
+        }
+      ],
+      "linkId": "2",
+      "text": "Family member health information"
+    },
+    {
+      "item": [
+        {
+          "item": [
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA10411-9",
+                    "system": "http://loinc.org",
+                    "display": "Maternal Cousin"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.1",
+              "text": "Relationship to you"
+            },
+            {
+              "answer": [
+                {
+                  "valueString": "Karren"
+                }
+              ],
+              "linkId": "2.1.1.2",
+              "text": "Name"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA3-6",
+                    "system": "http://loinc.org",
+                    "display": "Female"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.3",
+              "text": "Gender"
+            },
+            {
+              "answer": [
+                {
+                  "item": [
+                    {
+                      "item": [
+                        {
+                          "answer": [
+                            {
+                              "valueDecimal": 30
+                            }
+                          ],
+                          "linkId": "2.1.1.4.2.2",
+                          "text": "Age"
+                        }
+                      ],
+                      "linkId": "2.1.1.4.2"
+                    }
+                  ],
+                  "valueCoding": {
+                    "code": "LA33-6",
+                    "system": "http://loinc.org",
+                    "display": "Yes"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.4",
+              "text": "Living?"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA32-8",
+                    "system": "http://loinc.org",
+                    "display": "No"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.5",
+              "text": "Was this person born a twin?"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA32-8",
+                    "system": "http://loinc.org",
+                    "display": "No"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.6",
+              "text": "Was this person adopted?"
+            }
+          ],
+          "linkId": "2.1.1"
+        },
+        {
+          "item": [
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA14283-8",
+                    "system": "http://loinc.org",
+                    "display": "Breast Cancer"
+                  }
+                }
+              ],
+              "linkId": "2.1.2.1",
+              "text": "Disease or Condition"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA10397-0",
+                    "system": "http://loinc.org",
+                    "display": "30-39"
+                  }
+                }
+              ],
+              "linkId": "2.1.2.2",
+              "text": "Age at Diagnosis"
+            }
+          ],
+          "linkId": "2.1.2",
+          "text": "This family member's history of disease"
+        }
+      ],
+      "linkId": "2",
+      "text": "Family member health information"
+    },
+    {
+      "item": [
+        {
+          "item": [
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA10411-9",
+                    "system": "http://loinc.org",
+                    "display": "Maternal Cousin"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.1",
+              "text": "Relationship to you"
+            },
+            {
+              "answer": [
+                {
+                  "valueString": "Mary"
+                }
+              ],
+              "linkId": "2.1.1.2",
+              "text": "Name"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA3-6",
+                    "system": "http://loinc.org",
+                    "display": "Female"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.3",
+              "text": "Gender"
+            },
+            {
+              "answer": [
+                {
+                  "item": [
+                    {
+                      "item": [
+                        {
+                          "answer": [
+                            {
+                              "valueDecimal": 31
+                            }
+                          ],
+                          "linkId": "2.1.1.4.2.2",
+                          "text": "Age"
+                        }
+                      ],
+                      "linkId": "2.1.1.4.2"
+                    }
+                  ],
+                  "valueCoding": {
+                    "code": "LA33-6",
+                    "system": "http://loinc.org",
+                    "display": "Yes"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.4",
+              "text": "Living?"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA32-8",
+                    "system": "http://loinc.org",
+                    "display": "No"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.5",
+              "text": "Was this person born a twin?"
+            },
+            {
+              "answer": [
+                {
+                  "valueCoding": {
+                    "code": "LA32-8",
+                    "system": "http://loinc.org",
+                    "display": "No"
+                  }
+                }
+              ],
+              "linkId": "2.1.1.6",
+              "text": "Was this person adopted?"
+            }
+          ],
+          "linkId": "2.1.1"
+        }
+      ],
+      "linkId": "2",
+      "text": "Family member health information"
+    }
+  ],
+  "questionnaire": "http://hl7.org/fhir/uv/sdc/Questionnaire/questionnaire-sdc-profile-example-ussg-fht|4.0.0-ballot",
+  "status": "in-progress",
+  "subject": {
+    "reference": "http://example.org/fhir/Patient/proband"
+  },
+  "authored": "2008-01-17"
+}

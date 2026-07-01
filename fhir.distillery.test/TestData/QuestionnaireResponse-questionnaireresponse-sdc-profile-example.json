@@ -1,0 +1,138 @@
+{
+  "resourceType": "QuestionnaireResponse",
+  "id": "questionnaireresponse-sdc-profile-example",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaireresponse"
+    ]
+  },
+  "contained": [
+    {
+      "resourceType": "Organization",
+      "id": "containedOrg",
+      "name": "Some Organization"
+    }
+  ],
+  "source": {
+    "extension": [
+      {
+        "url": "http://hl7.org/fhir/StructureDefinition/alternate-reference",
+        "valueReference": {
+          "reference": "#containedOrg",
+          "display": "Some Organization"
+        }
+      }
+    ],
+    "display": "Some Organization"
+  },
+  "item": [
+    {
+      "item": [
+        {
+          "answer": [
+            {
+              "valueString": "2003-02-18"
+            }
+          ],
+          "linkId": "3921059v1.0",
+          "text": "Date of Current Pathologic Diagnosis"
+        },
+        {
+          "answer": [
+            {
+              "valueCoding": {
+                "code": "Primary",
+                "system": "http://example.org/nci.nih.gov/xml/owl/cadsr/form/form_design_identifier/3921052v1.0/question_identifier#3921060v1.0-cs",
+                "display": "Primary Diagnosis"
+              }
+            }
+          ],
+          "linkId": "3921060v1.0",
+          "text": "Diagnosis Type"
+        },
+        {
+          "answer": [
+            {
+              "valueString": "Left Ovary"
+            }
+          ],
+          "linkId": "3921065v1.0",
+          "text": "Primary Site"
+        }
+      ],
+      "linkId": "3921053v1.0",
+      "text": "Mandatory Diagnosis Questions"
+    },
+    {
+      "item": [
+        {
+          "answer": [
+            {
+              "valueCoding": {
+                "code": "At Restaging",
+                "system": "http://example.org/nci.nih.gov/xml/owl/cadsr/form/form_design_identifier/3921052v1.0/question_identifier#3921071v1.0-cs",
+                "display": "Restaging"
+              }
+            }
+          ],
+          "linkId": "3921071v1.0",
+          "text": "Diagnosis Time Point"
+        }
+      ],
+      "linkId": "3921066v1.0",
+      "text": "Conditional Diagnosis Questions"
+    },
+    {
+      "item": [
+        {
+          "answer": [
+            {
+              "valueString": "Harold Ornada"
+            }
+          ],
+          "linkId": "3921079v1.0",
+          "text": "Reviewing Pathologist"
+        },
+        {
+          "linkId": "3921080v1.0",
+          "text": "MedDRA disease code"
+        },
+        {
+          "answer": [
+            {
+              "valueCoding": {
+                "code": "Histologic",
+                "system": "http://example.org/nci.nih.gov/xml/owl/cadsr/form/form_design_identifier/3921052v1.0/question_identifier#3921081v1.0-cs",
+                "display": "Histological Procedure"
+              }
+            }
+          ],
+          "linkId": "3921081v1.0",
+          "text": "Assessment Method"
+        },
+        {
+          "answer": [
+            {
+              "valueCoding": {
+                "code": "G2",
+                "system": "http://example.org/nci.nih.gov/xml/owl/cadsr/form/form_design_identifier/3921052v1.0/question_identifier#3921085v1.0-cs",
+                "display": "Moderately Differentiated"
+              }
+            }
+          ],
+          "linkId": "3921085v1.0",
+          "text": "Tumor grade"
+        }
+      ],
+      "linkId": "3921077v1.0",
+      "text": "Optional Diagnosis Questions"
+    }
+  ],
+  "questionnaire": "http://hl7.org/fhir/uv/sdc/Questionnaire/3921052v1.0",
+  "status": "completed",
+  "authored": "2014-01-21",
+  "subject": {
+    "reference": "http://example.org/Patient/123",
+    "display": "Jane Smith"
+  }
+}

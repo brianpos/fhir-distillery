@@ -1,12 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-    <RootNamespace>fhir_distillery</RootNamespace>
+		<TargetFramework>net10.0</TargetFramework>
+		<RootNamespace>fhir_distillery</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Hl7.Fhir.Specification.R4" Version="3.8.0" />
+    <PackageReference Include="Hl7.Fhir.Specification.Data.R4" Version="5.13.4" />
+    <PackageReference Include="Hl7.Fhir.Specification.R4" Version="5.13.4" />
   </ItemGroup>
 
 

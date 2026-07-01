@@ -1,0 +1,45 @@
+{
+  "resourceType": "Questionnaire",
+  "id": "sdc-derivation-parent",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire"
+    ]
+  },
+  "extension": [
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/artifact-versionAlgorithm",
+      "valueCoding": {
+        "code": "semver",
+        "system": "http://hl7.org/fhir/version-algorithm"
+      }
+    }
+  ],
+  "item": [
+    {
+      "linkId": "1",
+      "text": "What is your family name? (required)",
+      "type": "string",
+      "required": true
+    },
+    {
+      "linkId": "2",
+      "text": "What is your first name? (optional)",
+      "type": "string"
+    },
+    {
+      "extension": [
+        {
+          "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-optionalDisplay",
+          "valueBoolean": true
+        }
+      ],
+      "linkId": "3",
+      "text": "What are your middle names? (optional, removable)",
+      "type": "string"
+    }
+  ],
+  "url": "http://build.fhir.org/ig/HL7/sdc/Questionnaire/sdc-derivation-parent",
+  "name": "SDCDerivationParent",
+  "status": "active"
+}

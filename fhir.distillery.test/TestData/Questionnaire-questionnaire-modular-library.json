@@ -1,0 +1,163 @@
+{
+  "resourceType": "Questionnaire",
+  "id": "questionnaire-modular-library",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-modular-library"
+    ]
+  },
+  "extension": [
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/artifact-versionAlgorithm",
+      "valueCoding": {
+        "code": "semver",
+        "system": "http://hl7.org/fhir/version-algorithm"
+      }
+    }
+  ],
+  "useContext": [
+    {
+      "code": {
+        "code": "workflow",
+        "system": "http://terminology.hl7.org/CodeSystem/usage-context-type"
+      },
+      "valueCodeableConcept": {
+        "coding": [
+          {
+            "code": "question-library",
+            "system": "http://hl7.org/fhir/uv/sdc/CodeSystem/temp"
+          }
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "extension": [
+        {
+          "valueExpression": {
+            "language": "text/fhirpath",
+            "expression": "%patient.birthdate"
+          },
+          "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-initialExpression"
+        },
+        {
+          "url": "http://hl7.org/fhir/StructureDefinition/minValue",
+          "valueDate": "1900-01-01"
+        },
+        {
+          "valueExpression": {
+            "language": "text/fhirpath",
+            "expression": "now() as date + 1 day"
+          },
+          "url": "http://hl7.org/fhir/StructureDefinition/cqf-expression"
+        }
+      ],
+      "linkId": "dob",
+      "text": "What is this person's date of birth?",
+      "type": "date"
+    },
+    {
+      "extension": [
+        {
+          "valueExpression": {
+            "language": "text/fhirpath",
+            "expression": "iif(%patient.gender='male','M', iif(%patient.gender='female','F'))"
+          },
+          "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-initialExpression"
+        }
+      ],
+      "linkId": "sex",
+      "text": "What is this person's gender?",
+      "type": "choice",
+      "answerValueSet": "http://hl7.org/fhir/ValueSet/administrative-gender"
+    },
+    {
+      "item": [
+        {
+          "linkId": "street",
+          "text": "Street address",
+          "type": "string"
+        },
+        {
+          "linkId": "city",
+          "text": "City/Town",
+          "type": "string"
+        },
+        {
+          "linkId": "state",
+          "text": "State",
+          "type": "open-choice",
+          "answerValueSet": "http://hl7.org/fhir/uv/sdc/ValueSet/sdc-question-library-states"
+        },
+        {
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/entryFormat",
+              "valueString": "9999"
+            },
+            {
+              "extension": [
+                {
+                  "url": "key",
+                  "valueId": "sdc-ex-pcode"
+                },
+                {
+                  "url": "human",
+                  "valueString": "Postal code must be 4 digits"
+                },
+                {
+                  "url": "severity",
+                  "valueCode": "error"
+                },
+                {
+                  "valueExpression": {
+                    "language": "text/fhirpath",
+                    "expression": "value.matches('^[0-9]{4}$')"
+                  },
+                  "url": "expression"
+                }
+              ],
+              "url": "http://hl7.org/fhir/StructureDefinition/targetConstraint"
+            }
+          ],
+          "linkId": "postalCode",
+          "text": "Postal Code",
+          "type": "string"
+        }
+      ],
+      "linkId": "address",
+      "text": "What is this person's current mailing address?",
+      "type": "group"
+    },
+    {
+      "item": [
+        {
+          "linkId": "prefix",
+          "text": "Prefix",
+          "type": "string"
+        },
+        {
+          "linkId": "first",
+          "text": "First",
+          "type": "string",
+          "maxLength": 100
+        },
+        {
+          "linkId": "last",
+          "text": "Last",
+          "type": "string",
+          "maxLength": 100
+        }
+      ],
+      "linkId": "name",
+      "text": "What is the person's official name?",
+      "type": "group"
+    }
+  ],
+  "url": "http://hl7.org/fhir/uv/sdc/Questionnaire/questionnaire-modular-library",
+  "name": "SDCModularQuestionnaireLibrary",
+  "status": "active",
+  "experimental": true,
+  "version": "3.0.0"
+}

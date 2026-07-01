@@ -1,0 +1,362 @@
+{
+  "resourceType": "Questionnaire",
+  "id": "questionnaire-sdc-profile-example-cap",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire"
+    ]
+  },
+  "extension": [
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/artifact-versionAlgorithm",
+      "valueCoding": {
+        "code": "semver",
+        "system": "http://hl7.org/fhir/version-algorithm"
+      }
+    }
+  ],
+  "item": [
+    {
+      "item": [
+        {
+          "answerOption": [
+            {
+              "valueCoding": {
+                "code": "M1",
+                "system": "http://example.org",
+                "display": "Margins univolved by tumor"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "M2",
+                "system": "http://example.org",
+                "display": "Margin(s) involved by tumor"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "M3",
+                "system": "http://example.org",
+                "display": "Cannot be determined"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "M4",
+                "system": "http://example.org",
+                "display": "Not applicable"
+              }
+            }
+          ],
+          "item": [
+            {
+              "extension": [
+                {
+                  "url": "http://hl7.org/fhir/5.0/StructureDefinition/extension-Questionnaire.item.disabledDisplay",
+                  "valueCode": "hidden"
+                }
+              ],
+              "enableWhen": [
+                {
+                  "question": "1.1",
+                  "operator": "=",
+                  "answerCoding": {
+                    "code": "M1",
+                    "system": "http://example.org"
+                  }
+                }
+              ],
+              "item": [
+                {
+                  "answerOption": [
+                    {
+                      "valueCoding": {
+                        "code": "D1",
+                        "system": "http://example.org",
+                        "display": "Specify (mm)"
+                      }
+                    },
+                    {
+                      "valueCoding": {
+                        "code": "D2",
+                        "system": "http://example.org",
+                        "display": "Cannot be assessed (explain)"
+                      }
+                    }
+                  ],
+                  "item": [
+                    {
+                      "extension": [
+                        {
+                          "url": "http://hl7.org/fhir/StructureDefinition/minValue",
+                          "valueDecimal": 0.01
+                        },
+                        {
+                          "url": "http://hl7.org/fhir/StructureDefinition/maxValue",
+                          "valueDecimal": 1000
+                        },
+                        {
+                          "url": "http://hl7.org/fhir/StructureDefinition/maxDecimalPlaces",
+                          "valueInteger": 2
+                        }
+                      ],
+                      "linkId": "1.1.1.1.1.1",
+                      "text": "Specify (mm)",
+                      "type": "decimal",
+                      "required": true
+                    },
+                    {
+                      "linkId": "1.1.1.1.2.1",
+                      "text": "Cannot be assessed (explain)",
+                      "type": "string",
+                      "required": true
+                    }
+                  ],
+                  "linkId": "1.1.1.1",
+                  "text": "Distance from Closest Margin",
+                  "type": "choice"
+                },
+                {
+                  "answerOption": [
+                    {
+                      "valueCoding": {
+                        "code": "W1",
+                        "system": "http://example.org",
+                        "display": "Specify margin"
+                      }
+                    },
+                    {
+                      "valueCoding": {
+                        "code": "W2",
+                        "system": "http://example.org",
+                        "display": "Cannot be determined (explain)"
+                      }
+                    }
+                  ],
+                  "item": [
+                    {
+                      "linkId": "1.1.1.2.1.1",
+                      "text": "Cannot be assessed (explain)",
+                      "type": "string",
+                      "required": true
+                    },
+                    {
+                      "linkId": "1.1.1.2.2.1",
+                      "text": "Cannot be determined (explain)",
+                      "type": "string",
+                      "required": true
+                    }
+                  ],
+                  "linkId": "1.1.1.2",
+                  "text": "Specify Margin, if possible",
+                  "type": "choice"
+                }
+              ],
+              "linkId": "1.1.1",
+              "type": "group",
+              "required": true
+            },
+            {
+              "answerOption": [
+                {
+                  "valueCoding": {
+                    "code": "I1",
+                    "system": "http://example.org",
+                    "display": "Specify margin(s)"
+                  }
+                },
+                {
+                  "valueCoding": {
+                    "code": "I2",
+                    "system": "http://example.org",
+                    "display": "Cannot be determined (explain)"
+                  }
+                }
+              ],
+              "item": [
+                {
+                  "linkId": "1.1.2.1.1.1",
+                  "text": "Specify margin(s)",
+                  "type": "string",
+                  "required": true
+                },
+                {
+                  "linkId": "1.1.2.1.2.1",
+                  "text": "Cannot be determined (explain)",
+                  "type": "string",
+                  "required": true
+                }
+              ],
+              "linkId": "1.1.2.1",
+              "text": "Specify Margin(s), if possible",
+              "type": "choice",
+              "required": true
+            },
+            {
+              "linkId": "1.1.3.1",
+              "text": "Cannot be determined",
+              "type": "string",
+              "required": true
+            },
+            {
+              "linkId": "1.1.4.1",
+              "text": "Not Applicable",
+              "type": "string",
+              "required": true
+            }
+          ],
+          "linkId": "1.1",
+          "text": "Status of surgical margin involvement by tumor (observable entity)",
+          "type": "choice",
+          "required": true
+        }
+      ],
+      "linkId": "1",
+      "text": "MARGINS",
+      "type": "group",
+      "required": true
+    },
+    {
+      "item": [
+        {
+          "answerOption": [
+            {
+              "valueCoding": {
+                "code": "E1",
+                "system": "http://example.org",
+                "display": "Not identified"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "E2",
+                "system": "http://example.org",
+                "display": "Present (specify)"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "E3",
+                "system": "http://example.org",
+                "display": "Indeterminate"
+              }
+            }
+          ],
+          "item": [
+            {
+              "linkId": "2.1.1.1",
+              "text": "Not identified",
+              "type": "string",
+              "required": true
+            },
+            {
+              "linkId": "2.1.2.1",
+              "text": "Present (specify)",
+              "type": "string",
+              "required": true
+            },
+            {
+              "linkId": "2.1.3.1",
+              "text": "Indeterminate",
+              "type": "string",
+              "required": true
+            }
+          ],
+          "linkId": "2.1",
+          "text": "Treatment Effect (applicable to carcinomas treated with neoadjuvant therapy)",
+          "type": "choice"
+        },
+        {
+          "answerOption": [
+            {
+              "valueCoding": {
+                "code": "U1",
+                "system": "http://example.org",
+                "display": "Hemorrhagic"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "U2",
+                "system": "http://example.org",
+                "display": "Necrotic"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "U3",
+                "system": "http://example.org",
+                "display": "Invasion"
+              }
+            },
+            {
+              "valueCoding": {
+                "code": "U4",
+                "system": "http://example.org",
+                "display": "Other (specify)"
+              }
+            }
+          ],
+          "item": [
+            {
+              "answerOption": [
+                {
+                  "valueCoding": {
+                    "code": "V1",
+                    "system": "http://example.org",
+                    "display": "Capsule"
+                  }
+                },
+                {
+                  "valueCoding": {
+                    "code": "V2",
+                    "system": "http://example.org",
+                    "display": "Vessels"
+                  }
+                },
+                {
+                  "valueCoding": {
+                    "code": "V3",
+                    "system": "http://example.org",
+                    "display": "Extra-adrenal (specify)"
+                  }
+                }
+              ],
+              "item": [
+                {
+                  "linkId": "2.2.1.1.1.1",
+                  "text": "Extra-adrenal (specify)",
+                  "type": "string",
+                  "required": true
+                }
+              ],
+              "linkId": "2.2.1.1",
+              "text": "??",
+              "type": "choice",
+              "repeats": true
+            },
+            {
+              "linkId": "2.2.2.1",
+              "text": "Other (specify)",
+              "type": "string",
+              "required": true
+            }
+          ],
+          "linkId": "2.2",
+          "text": "Tumor Description",
+          "type": "choice",
+          "repeats": true
+        }
+      ],
+      "linkId": "2",
+      "text": "ACCESSORY FINDINGS",
+      "type": "group",
+      "required": true
+    }
+  ],
+  "url": "http://hl7.org/fhir/uv/sdc/Questionnaire/questionnaire-sdc-profile-example-cap",
+  "name": "QuestionnaireSDCProfileExampleCap",
+  "title": "Questionnaire SDC Profile Cap",
+  "status": "active"
+}

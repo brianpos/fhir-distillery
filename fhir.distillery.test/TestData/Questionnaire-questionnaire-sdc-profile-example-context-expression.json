@@ -1,0 +1,156 @@
+{
+  "resourceType": "Questionnaire",
+  "id": "questionnaire-sdc-profile-example-context-expression",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-behave"
+    ]
+  },
+  "extension": [
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/artifact-versionAlgorithm",
+      "valueCoding": {
+        "code": "semver",
+        "system": "http://hl7.org/fhir/version-algorithm"
+      }
+    },
+    {
+      "extension": [
+        {
+          "url": "name",
+          "valueCoding": {
+            "code": "patient",
+            "system": "http://hl7.org/fhir/uv/sdc/CodeSystem/launchContext",
+            "display": "Patient"
+          }
+        },
+        {
+          "url": "type",
+          "valueCode": "Patient"
+        },
+        {
+          "url": "description",
+          "valueString": "The patient that is to be used to pre-populate the form"
+        }
+      ],
+      "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-launchContext"
+    }
+  ],
+  "item": [
+    {
+      "item": [
+        {
+          "linkId": "1.1",
+          "text": "Instruction: Click on \"Previous Visits\" button to view all the visits of this patient in the past year.",
+          "type": "display"
+        },
+        {
+          "extension": [
+            {
+              "extension": [
+                {
+                  "url": "label",
+                  "valueString": "Encounters in past year"
+                },
+                {
+                  "valueExpression": {
+                    "description": "list all Encounters with patient in the past year, in order by date - newest to oldest",
+                    "language": "application/x-fhir-query",
+                    "expression": "Encounter?patient={{%patient.id}}&date=ge{{today()-1 year}}&_sort=-date&_include=Encounter:practitioner"
+                  },
+                  "url": "expression"
+                }
+              ],
+              "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-contextExpression"
+            },
+            {
+              "extension": [
+                {
+                  "url": "path",
+                  "valueString": "period.start"
+                },
+                {
+                  "url": "label",
+                  "valueString": "Date"
+                },
+                {
+                  "url": "width",
+                  "valueQuantity": {
+                    "value": 40,
+                    "code": "%",
+                    "system": "http://unitsofmeasure.org"
+                  }
+                },
+                {
+                  "url": "forDisplay",
+                  "valueBoolean": true
+                }
+              ],
+              "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-choiceColumn"
+            },
+            {
+              "extension": [
+                {
+                  "url": "path",
+                  "valueString": "reason.coding.display + ' - ' + type.text"
+                },
+                {
+                  "url": "label",
+                  "valueString": "Visit Reason/Description"
+                },
+                {
+                  "url": "width",
+                  "valueQuantity": {
+                    "value": 60,
+                    "code": "%",
+                    "system": "http://unitsofmeasure.org"
+                  }
+                },
+                {
+                  "url": "forDisplay",
+                  "valueBoolean": false
+                }
+              ],
+              "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-choiceColumn"
+            },
+            {
+              "valueCodeableConcept": {
+                "coding": [
+                  {
+                    "code": "radio-button",
+                    "system": "http://hl7.org/fhir/questionnaire-item-control",
+                    "display": "Radio Button"
+                  }
+                ],
+                "text": "A control where choices are listed with a button beside them. The button can be toggled to select or de-select a given choice. Selecting one item deselects all others."
+              },
+              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl"
+            },
+            {
+              "valueCodeableConcept": {
+                "coding": [
+                  {
+                    "code": "radio-button",
+                    "system": "http://hl7.org/fhir/questionnaire-item-control",
+                    "display": "Radio Button"
+                  }
+                ],
+                "text": "A control where choices are listed with a button beside them. The button can be toggled to select or de-select a given choice. Selecting one item deselects all others."
+              },
+              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-itemControl"
+            }
+          ],
+          "linkId": "1.2",
+          "text": "Has the patient been admitted for this issue on any visits in the past year?",
+          "type": "choice",
+          "answerValueSet": "http://hl7.org/fhir/ValueSet/yesnodontknow"
+        }
+      ],
+      "linkId": "1.0",
+      "type": "group"
+    }
+  ],
+  "url": "http://hl7.org/fhir/uv/sdc/questionnaire-sdc-profile-example-context-expression",
+  "name": "SDCExampleUsingContextExpression",
+  "status": "active"
+}

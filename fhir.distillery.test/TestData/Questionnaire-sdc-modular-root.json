@@ -1,0 +1,143 @@
+{
+  "resourceType": "Questionnaire",
+  "id": "sdc-modular-root",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-modular"
+    ]
+  },
+  "extension": [
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/artifact-versionAlgorithm",
+      "valueCoding": {
+        "code": "semver",
+        "system": "http://hl7.org/fhir/version-algorithm"
+      }
+    },
+    {
+      "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-assemble-expectation",
+      "valueCode": "assemble-root"
+    },
+    {
+      "extension": [
+        {
+          "url": "name",
+          "valueCoding": {
+            "code": "patient",
+            "system": "http://hl7.org/fhir/uv/sdc/CodeSystem/launchContext"
+          }
+        },
+        {
+          "url": "type",
+          "valueCode": "Patient"
+        }
+      ],
+      "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-launchContext"
+    },
+    {
+      "valueExpression": {
+        "name": "person",
+        "language": "text/fhirpath",
+        "expression": "%patient"
+      },
+      "url": "http://hl7.org/fhir/StructureDefinition/variable"
+    }
+  ],
+  "item": [
+    {
+      "extension": [
+        {
+          "valueExpression": {
+            "name": "linkIdPrefix",
+            "language": "text/fhirpath",
+            "expression": "'patientname.'"
+          },
+          "url": "http://hl7.org/fhir/StructureDefinition/variable"
+        }
+      ],
+      "item": [
+        {
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-subQuestionnaire",
+              "valueCanonical": "http://hl7.org/fhir/uv/sdc/Questionnaire/sdc-modular-name|3.0.0"
+            }
+          ],
+          "linkId": "1.1",
+          "text": "Unable to resolve 'name' sub-questionnaire",
+          "type": "display"
+        }
+      ],
+      "linkId": "1",
+      "definition": "http://hl7.org/fhir/uv/sdc/StructureDefinition/SdcQuestionLibrary#SdcQuestionLibrary.name",
+      "type": "group"
+    },
+    {
+      "linkId": "2",
+      "definition": "http://hl7.org/fhir/uv/sdc/StructureDefinition/SdcQuestionLibrary#SdcQuestionLibrary.dob",
+      "type": "date",
+      "required": true
+    },
+    {
+      "linkId": "3",
+      "definition": "http://hl7.org/fhir/uv/sdc/StructureDefinition/SdcQuestionLibrary#SdcQuestionLibrary.sex",
+      "type": "choice",
+      "required": true
+    },
+    {
+      "item": [
+        {
+          "linkId": "4.1",
+          "type": "display"
+        }
+      ],
+      "linkId": "4",
+      "definition": "http://hl7.org/fhir/uv/sdc/StructureDefinition/SdcQuestionLibrary#SdcQuestionLibrary.address",
+      "type": "group",
+      "required": true
+    },
+    {
+      "extension": [
+        {
+          "valueExpression": {
+            "name": "person",
+            "language": "text/fhirpath",
+            "expression": "%patient.contact"
+          },
+          "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-itemPopulationContext"
+        },
+        {
+          "valueExpression": {
+            "name": "linkIdPrefix",
+            "language": "text/fhirpath",
+            "expression": "'patientname.'"
+          },
+          "url": "http://hl7.org/fhir/StructureDefinition/variable"
+        }
+      ],
+      "item": [
+        {
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-subQuestionnaire",
+              "valueCanonical": "http://hl7.org/fhir/uv/sdc/Questionnaire/sdc-modular-contact|3.0.0"
+            }
+          ],
+          "linkId": "5.1",
+          "text": "Unable to resolve 'contact' sub-questionnaire",
+          "type": "display"
+        }
+      ],
+      "linkId": "5",
+      "type": "group",
+      "required": true,
+      "repeats": true
+    }
+  ],
+  "url": "http://hl7.org/fhir/uv/sdc/Questionnaire/sdc-modular-root",
+  "name": "QuestionnaireSDCModularRoot",
+  "title": "Example modular Questionnaire",
+  "status": "active",
+  "experimental": true,
+  "description": "Example modular questionnaire - root of a questionnaire that references other questionnaires and element definitions"
+}

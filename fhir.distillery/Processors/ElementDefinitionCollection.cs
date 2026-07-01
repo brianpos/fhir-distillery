@@ -65,14 +65,14 @@ namespace fhir_distillery.Processors
         /// <returns></returns>
         public bool IncludeElementFromBaseOrDatatype(string path)
         {
-            if (path.StartsWith(MyElementDefinition.Path + "."))
+            if (path.Replace("[x]","").StartsWith(MyElementDefinition.Path.Replace("[x]", "") + "."))
             {
                 string relativePath = path.Substring(MyElementDefinition.Path.Length + 1);
                 string immediateChildPath = $"{MyElementDefinition.Path}.{(relativePath.Contains(".") ? relativePath.Substring(0, relativePath.IndexOf(".")):relativePath)}";
                 // this comes from my part of the tree
                 foreach (var child in Children)
                 {
-                    if (child.MyElementDefinition.Path == immediateChildPath)
+                    if (child.MyElementDefinition.Path.Replace("[x]", "") == immediateChildPath.Replace("[x]", ""))
                     {
                         return child.IncludeElementFromBaseOrDatatype(path);
                     }

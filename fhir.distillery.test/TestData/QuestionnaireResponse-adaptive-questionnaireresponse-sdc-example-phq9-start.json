@@ -1,0 +1,409 @@
+{
+  "resourceType": "QuestionnaireResponse",
+  "id": "adaptive-questionnaireresponse-sdc-example-phq9-start",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaireresponse-adapt"
+    ]
+  },
+  "contained": [
+    {
+      "resourceType": "Questionnaire",
+      "id": "contained-adaptive-questionnaire-example-phq9-start",
+      "extension": [
+        {
+          "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-questionnaireAdaptive",
+          "valueBoolean": true
+        },
+        {
+          "url": "http://hl7.org/fhir/StructureDefinition/artifact-versionAlgorithm",
+          "valueCoding": {
+            "code": "semver",
+            "system": "http://hl7.org/fhir/version-algorithm"
+          }
+        }
+      ],
+      "derivedFrom": [
+        "http://hl7.org/fhir/uv/sdc/Questionnaire/questionnaire-sdc-profile-example-PHQ9"
+      ],
+      "_derivedFrom": [
+        {
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/StructureDefinition/questionnaire-derivationType",
+              "valueCoding": {
+                "code": "compliesWith",
+                "system": "http://hl7.org/fhir/questionnaire-derivationType"
+              }
+            }
+          ]
+        }
+      ],
+      "subjectType": [
+        "Patient"
+      ],
+      "item": [
+        {
+          "item": [
+            {
+              "linkId": "H1/T1/Q1",
+              "text": "Little interest or pleasure in doing things?",
+              "type": "choice",
+              "required": true,
+              "repeats": false,
+              "answerValueSet": "#VSPHQ9B"
+            },
+            {
+              "linkId": "H1/T1/Q2",
+              "text": "Feeling down, depressed, or hopeless?",
+              "type": "choice",
+              "required": true,
+              "repeats": false,
+              "answerValueSet": "#VSPHQ9B"
+            },
+            {
+              "linkId": "H1/T1/Q3",
+              "text": "Trouble falling or staying asleep, or sleeping too much?",
+              "type": "choice",
+              "required": true,
+              "repeats": false,
+              "answerValueSet": "#VSPHQ9B"
+            },
+            {
+              "linkId": "H1/T1/Q4",
+              "text": "Feeling tired or having little energy?",
+              "type": "choice",
+              "required": true,
+              "repeats": false,
+              "answerValueSet": "#VSPHQ9B"
+            },
+            {
+              "linkId": "H1/T1/Q5",
+              "text": "Poor appetite or overeating?",
+              "type": "choice",
+              "required": true,
+              "repeats": false,
+              "answerValueSet": "#VSPHQ9B"
+            },
+            {
+              "linkId": "H1/T1/Q6",
+              "text": "Feeling bad about yourself - or that you are a failure or have let yourself or your family down?",
+              "type": "choice",
+              "required": true,
+              "repeats": false,
+              "answerValueSet": "#VSPHQ9B"
+            },
+            {
+              "linkId": "H1/T1/Q7",
+              "text": "Trouble concentrating on things, such as reading the newspaper or watching television?",
+              "type": "choice",
+              "required": true,
+              "repeats": false,
+              "answerValueSet": "#VSPHQ9B"
+            },
+            {
+              "linkId": "H1/T1/Q8",
+              "text": "Moving or speaking so slowly that other people could gave noticed? Or so fidgety or restless that you have been moving a lot more than usual?",
+              "type": "choice",
+              "required": true,
+              "repeats": false,
+              "answerValueSet": "#VSPHQ9B"
+            },
+            {
+              "linkId": "H1/T1/Q9",
+              "text": "Thoughts that you would be better off dead, or thoughts of hurting yourself in some way?",
+              "type": "choice",
+              "required": true,
+              "repeats": false,
+              "answerValueSet": "#VSPHQ9B"
+            }
+          ],
+          "linkId": "H1/T1",
+          "text": "Over the last two weeks, how often have you been bothered by any of the following problems?",
+          "type": "group"
+        }
+      ],
+      "version": "0.0.1",
+      "name": "SDCPHQ9Start",
+      "title": "Patient Health Questionnaire - 9 Item",
+      "status": "active",
+      "experimental": true
+    },
+    {
+      "resourceType": "ValueSet",
+      "id": "VSPHQ9B",
+      "meta": {
+        "profile": [
+          "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-valueset"
+        ]
+      },
+      "compose": {
+        "include": [
+          {
+            "concept": [
+              {
+                "code": "Not-at-all",
+                "display": "Not at all"
+              },
+              {
+                "code": "Several-days",
+                "display": "Several days"
+              },
+              {
+                "code": "More than half the days",
+                "display": "More than half the days"
+              },
+              {
+                "code": "Nearly every day",
+                "display": "Nearly every day"
+              }
+            ],
+            "system": "http://hl7.org/fhir/uv/sdc/CodeSystem/CSPHQ9"
+          }
+        ]
+      },
+      "expansion": {
+        "extension": [
+          {
+            "extension": [
+              {
+                "url": "code",
+                "valueCode": "itemWeight"
+              },
+              {
+                "url": "uri",
+                "valueUri": "http://hl7.org/fhir/concept-properties#itemWeight"
+              }
+            ],
+            "url": "http://hl7.org/fhir/5.0/StructureDefinition/extension-ValueSet.expansion.property"
+          }
+        ],
+        "contains": [
+          {
+            "extension": [
+              {
+                "extension": [
+                  {
+                    "url": "code",
+                    "valueCode": "itemWeight"
+                  },
+                  {
+                    "url": "value",
+                    "valueDecimal": 0
+                  }
+                ],
+                "url": "http://hl7.org/fhir/5.0/StructureDefinition/extension-ValueSet.expansion.contains.property"
+              }
+            ],
+            "system": "http://hl7.org/fhir/uv/sdc/CodeSystem/CSPHQ9",
+            "code": "Not-at-all",
+            "display": "Not at all"
+          },
+          {
+            "extension": [
+              {
+                "extension": [
+                  {
+                    "url": "code",
+                    "valueCode": "itemWeight"
+                  },
+                  {
+                    "url": "value",
+                    "valueDecimal": 1
+                  }
+                ],
+                "url": "http://hl7.org/fhir/5.0/StructureDefinition/extension-ValueSet.expansion.contains.property"
+              }
+            ],
+            "system": "http://hl7.org/fhir/uv/sdc/CodeSystem/CSPHQ9",
+            "code": "Several-days",
+            "display": "Several days"
+          },
+          {
+            "extension": [
+              {
+                "extension": [
+                  {
+                    "url": "code",
+                    "valueCode": "itemWeight"
+                  },
+                  {
+                    "url": "value",
+                    "valueDecimal": 2
+                  }
+                ],
+                "url": "http://hl7.org/fhir/5.0/StructureDefinition/extension-ValueSet.expansion.contains.property"
+              }
+            ],
+            "system": "http://hl7.org/fhir/uv/sdc/CodeSystem/CSPHQ9",
+            "code": "More than half the days",
+            "display": "More than half the days"
+          },
+          {
+            "extension": [
+              {
+                "extension": [
+                  {
+                    "url": "code",
+                    "valueCode": "itemWeight"
+                  },
+                  {
+                    "url": "value",
+                    "valueDecimal": 4
+                  }
+                ],
+                "url": "http://hl7.org/fhir/5.0/StructureDefinition/extension-ValueSet.expansion.contains.property"
+              }
+            ],
+            "system": "http://hl7.org/fhir/uv/sdc/CodeSystem/CSPHQ9",
+            "code": "Nearly every day",
+            "display": "Nearly every day"
+          }
+        ],
+        "timestamp": "2024-12-06T22:52:00-07:00"
+      },
+      "name": "VSPHQ9B",
+      "status": "active",
+      "experimental": true,
+      "description": "The answer list for questions addressing the frequency in which patient reports experiencing behaviors that are assessed in the PHQ-9 Questionnaire.",
+      "immutable": true
+    }
+  ],
+  "identifier": {
+    "value": "adaptive-questionnaireresponse-example-phq9-start"
+  },
+  "item": [
+    {
+      "item": [
+        {
+          "answer": [
+            {
+              "valueCoding": {
+                "code": "Not-at-all",
+                "system": "http://hl7.org/fhir/uv/sdc/CodeSystem/CSPHQ9",
+                "display": "Not at all"
+              }
+            }
+          ],
+          "linkId": "H1/T1/Q1",
+          "text": "Little interest or pleasure in doing things?"
+        },
+        {
+          "answer": [
+            {
+              "valueCoding": {
+                "code": "Not-at-all",
+                "system": "http://hl7.org/fhir/uv/sdc/CodeSystem/CSPHQ9",
+                "display": "Not at all"
+              }
+            }
+          ],
+          "linkId": "H1/T1/Q2",
+          "text": "Feeling down, depressed, or hopeless?"
+        },
+        {
+          "answer": [
+            {
+              "valueCoding": {
+                "code": "Not-at-all",
+                "system": "http://hl7.org/fhir/uv/sdc/CodeSystem/CSPHQ9",
+                "display": "Not at all"
+              }
+            }
+          ],
+          "linkId": "H1/T1/Q3",
+          "text": "Trouble falling or staying asleep, or sleeping too much?"
+        },
+        {
+          "answer": [
+            {
+              "valueCoding": {
+                "code": "Several-days",
+                "system": "http://hl7.org/fhir/uv/sdc/CodeSystem/CSPHQ9",
+                "display": "Several days"
+              }
+            }
+          ],
+          "linkId": "H1/T1/Q4",
+          "text": "Feeling tired or having little energy?"
+        },
+        {
+          "answer": [
+            {
+              "valueCoding": {
+                "code": "More than half the days",
+                "system": "http://hl7.org/fhir/uv/sdc/CodeSystem/CSPHQ9",
+                "display": "More than half the days"
+              }
+            }
+          ],
+          "linkId": "H1/T1/Q5",
+          "text": "Poor appetite or overeating?"
+        },
+        {
+          "answer": [
+            {
+              "valueCoding": {
+                "code": "Several-days",
+                "system": "http://hl7.org/fhir/uv/sdc/CodeSystem/CSPHQ9",
+                "display": "Several days"
+              }
+            }
+          ],
+          "linkId": "H1/T1/Q6",
+          "text": "Feeling bad about yourself - or that you are a failure or have let yourself or your family down?"
+        },
+        {
+          "answer": [
+            {
+              "valueCoding": {
+                "code": "Nearly every day",
+                "system": "http://hl7.org/fhir/uv/sdc/CodeSystem/CSPHQ9",
+                "display": "Nearly every day"
+              }
+            }
+          ],
+          "linkId": "H1/T1/Q7",
+          "text": "Trouble concentrating on things, such as reading the newspaper or watching television?"
+        },
+        {
+          "answer": [
+            {
+              "valueCoding": {
+                "code": "More than half the days",
+                "system": "http://hl7.org/fhir/uv/sdc/CodeSystem/CSPHQ9",
+                "display": "More than half the days"
+              }
+            }
+          ],
+          "linkId": "H1/T1/Q8",
+          "text": "Moving or speaking so slowly that other people could gave noticed? Or so fidgety or restless that you have been moving a lot more than usual?"
+        },
+        {
+          "answer": [
+            {
+              "valueCoding": {
+                "code": "Several-days",
+                "system": "http://hl7.org/fhir/uv/sdc/CodeSystem/CSPHQ9",
+                "display": "Several days"
+              }
+            }
+          ],
+          "linkId": "H1/T1/Q9",
+          "text": "Thoughts that you would be better off dead, or thoughts of hurting yourself in some way?"
+        }
+      ],
+      "linkId": "H1/T1",
+      "text": "Over the last two weeks, how often have you been bothered by any of the following problems?"
+    }
+  ],
+  "questionnaire": "#contained-adaptive-questionnaire-example-phq9-start",
+  "status": "in-progress",
+  "subject": {
+    "reference": "http://example.org/fhir/Patient/proband"
+  },
+  "authored": "2019-08-21T20:36:57.544Z",
+  "author": {
+    "reference": "http://example.org/fhir/Patient/proband"
+  }
+}

@@ -373,7 +373,7 @@ namespace fhir_distillery
                 profileOutputDirectory = _outputProfilePath;
 
             // Now output the file
-            System.IO.File.WriteAllText($"{profileOutputDirectory}/StructureDefinition-{sd.Id}.xml", new FhirXmlSerializer(new SerializerSettings() { AppendNewLine = true, Pretty = true }).SerializeToString(sd));
+            System.IO.File.WriteAllText($"{profileOutputDirectory}/StructureDefinition-{sd.Id.Replace("/","_")}.xml", new FhirXmlSerializer(new SerializerSettings() { AppendNewLine = true, Pretty = true }).SerializeToString(sd));
 
             // And add it to our resolver
             sourceSD.InvalidateByCanonicalUri(sd.Url);

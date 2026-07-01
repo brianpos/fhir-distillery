@@ -1,0 +1,81 @@
+{
+  "resourceType": "Questionnaire",
+  "id": "sdc-modular-contact",
+  "meta": {
+    "profile": [
+      "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-modular"
+    ]
+  },
+  "extension": [
+    {
+      "url": "http://hl7.org/fhir/StructureDefinition/artifact-versionAlgorithm",
+      "valueCoding": {
+        "code": "semver",
+        "system": "http://hl7.org/fhir/version-algorithm"
+      }
+    },
+    {
+      "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-assemble-expectation",
+      "valueCode": "assemble-child"
+    },
+    {
+      "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-assembleContext",
+      "valueString": "linkIdPrefix"
+    },
+    {
+      "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-assembleContext",
+      "valueString": "person"
+    }
+  ],
+  "item": [
+    {
+      "extension": [
+        {
+          "valueExpression": {
+            "name": "linkIdPrefix",
+            "language": "text/fhirpath",
+            "expression": "%linkIdPrefix + 'name.'"
+          },
+          "url": "http://hl7.org/fhir/StructureDefinition/variable"
+        }
+      ],
+      "item": [
+        {
+          "extension": [
+            {
+              "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-subQuestionnaire",
+              "valueCanonical": "http://hl7.org/fhir/uv/sdc/Questionnaire/sdc-modular-name|3.0.0"
+            }
+          ],
+          "linkId": "1.1",
+          "text": "Unable to resolve 'name' sub-questionnaire",
+          "type": "display"
+        }
+      ],
+      "linkId": "1",
+      "type": "group"
+    },
+    {
+      "extension": [
+        {
+          "valueExpression": {
+            "language": "text/fhirpath",
+            "expression": "%person.telecom.where(use='phone').first()"
+          },
+          "url": "http://hl7.org/fhir/uv/sdc/StructureDefinition/sdc-questionnaire-initialExpression"
+        }
+      ],
+      "linkId": "2",
+      "definition": "http://example.org/StructureDefinition/non-existent-library#Stuff.phone",
+      "text": "Phone number",
+      "type": "string",
+      "required": true
+    }
+  ],
+  "url": "http://hl7.org/fhir/uv/sdc/Questionnaire/sdc-modular-contact",
+  "name": "QuestionnaireSDCModularContact",
+  "title": "Example sub-module Questionnaire for contact",
+  "status": "active",
+  "experimental": true,
+  "description": "Example questionnaire module - represents a patient's contacts and is itself a modular questionnaire that references other questionnaires and element definitions"
+}

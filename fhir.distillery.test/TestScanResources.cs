@@ -44,7 +44,7 @@ namespace fhir_distillery
         public void GenerateMinimumSD()
         {
             string sourcePath = Configuration.GetValue<string>("sourcePath");
-            string outputPath = Configuration.GetValue<string>("outputPath");
+            string outputPath = Configuration.GetValue<string>("outputPath", "OutputResources");
             string canonicalBase = Configuration.GetValue<string>("defaults:baseurl");
             string publisher = Configuration.GetValue<string>("defaults:publisher");
             ScanResources processor = new ScanResources(sourcePath, outputPath,
@@ -55,10 +55,10 @@ namespace fhir_distillery
         }
 
         [TestMethod]
-        public void DiscoverExtensionsInFolderXml()
+        public void DiscoverExtensionsInFolder()
         {
             string sourcePath = Configuration.GetValue<string>("sourcePath");
-            string outputPath = Configuration.GetValue<string>("outputPath");
+            string outputPath = Configuration.GetValue<string>("outputPath", "OutputResources");
             string canonicalBase = Configuration.GetValue<string>("defaults:baseurl");
             string publisher = Configuration.GetValue<string>("defaults:publisher");
             ScanResources processor = new ScanResources(sourcePath, outputPath,
@@ -70,22 +70,20 @@ namespace fhir_distillery
                 try
                 {
                     var resource = new FhirXmlParser().Parse<Resource>(File.ReadAllText(file));
-                    System.Diagnostics.Trace.WriteLine($"{file} {resource.TypeName}/{resource.Id}");
-                    if (resource is Bundle bundle)
-                    {
-                        foreach (var entry in bundle.Entry.Select(e => e.Resource))
-                        {
-                            if (entry != null)
-                            {
-                                System.Diagnostics.Trace.WriteLine($"  -->{entry.TypeName}/{entry.Id}");
-                                processor.ScanForExtensions(null, entry.ToTypedElement(), null);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        processor.ScanForExtensions(null, resource.ToTypedElement(), null);
-                    }
+                    DiscoverInFile(processor, file, resource);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Trace.WriteLine($"{file}");
+                    System.Diagnostics.Trace.WriteLine($"  ==> Exception {ex.Message}");
+                }
+            }
+            foreach (string file in Directory.EnumerateFiles(exampleResourcesPath, "*.json", SearchOption.AllDirectories))
+            {
+                try
+                {
+                    var resource = new FhirJsonParser().Parse<Resource>(File.ReadAllText(file));
+                    DiscoverInFile(processor, file, resource);
                 }
                 catch (Exception ex)
                 {
@@ -100,11 +98,31 @@ namespace fhir_distillery
             // -- with observations - based on a common profile, then train it on a folder to learn what they should look like
         }
 
-        [TestMethod]
+        private static void DiscoverInFile(ScanResources processor, string file, Resource resource)
+        {
+            System.Diagnostics.Trace.WriteLine($"{file} {resource.TypeName}/{resource.Id}");
+            if (resource is Bundle bundle)
+            {
+                foreach (var entry in bundle.Entry.Select(e => e.Resource))
+                {
+                    if (entry != null)
+                    {
+                        System.Diagnostics.Trace.WriteLine($"  -->{entry.TypeName}/{entry.Id}");
+                        processor.ScanForExtensions(null, entry.ToTypedElement(), null);
+                    }
+                }
+            }
+            else
+            {
+                processor.ScanForExtensions(null, resource.ToTypedElement(), null);
+            }
+        }
+
+        [TestMethod, Ignore]
         public void DiscoverExtensionsOnFhirServer()
         {
             string sourcePath = Configuration.GetValue<string>("sourcePath");
-            string outputPath = Configuration.GetValue<string>("outputPath");
+            string outputPath = Configuration.GetValue<string>("outputPath", "OutputResources");
             string canonicalBase = Configuration.GetValue<string>("defaults:baseurl");
             string publisher = Configuration.GetValue<string>("defaults:publisher");
             ScanResources processor = new ScanResources(sourcePath, outputPath,
@@ -147,7 +165,7 @@ namespace fhir_distillery
         public void TestElementCollection()
         {
             string sourcePath = Configuration.GetValue<string>("sourcePath");
-            string outputPath = Configuration.GetValue<string>("outputPath");
+            string outputPath = Configuration.GetValue<string>("outputPath", "OutputResources");
             string canonicalBase = Configuration.GetValue<string>("defaults:baseurl");
             string publisher = Configuration.GetValue<string>("defaults:publisher");
             ScanResources processor = new ScanResources(sourcePath, outputPath,
@@ -163,7 +181,7 @@ namespace fhir_distillery
         public void TestElementUsePropertyFromBase()
         {
             string sourcePath = Configuration.GetValue<string>("sourcePath");
-            string outputPath = Configuration.GetValue<string>("outputPath");
+            string outputPath = Configuration.GetValue<string>("outputPath", "OutputResources");
             string canonicalBase = Configuration.GetValue<string>("defaults:baseurl");
             string publisher = Configuration.GetValue<string>("defaults:publisher");
             ScanResources processor = new ScanResources(sourcePath, outputPath,
@@ -177,6 +195,24 @@ namespace fhir_distillery
             Assert.AreEqual(33, edc.Elements.Count());
             edc.IncludeElementFromBaseOrDatatype("Patient.identifier.value");
             Assert.AreEqual(39, edc.Elements.Count());
+        }
+
+        [TestMethod]
+        public void TestElementUsePropertyFromBackbone()
+        {
+            string sourcePath = Configuration.GetValue<string>("sourcePath");
+            string outputPath = Configuration.GetValue<string>("outputPath", "OutputResources");
+            string canonicalBase = Configuration.GetValue<string>("defaults:baseurl");
+            string publisher = Configuration.GetValue<string>("defaults:publisher");
+            ScanResources processor = new ScanResources(sourcePath, outputPath,
+                                                canonicalBase, publisher);
+
+            var sd = processor.sourceSD.ResolveByCanonicalUri("http://hl7.org/fhir/StructureDefinition/Questionnaire") as StructureDefinition;
+            Assert.AreEqual(45, sd.Differential.Element.Count());
+            ElementDefinitionCollection edc = new ElementDefinitionCollection(processor.sourceSD, sd.Differential.Element.ToList());
+            Assert.AreEqual(45, edc.Elements.Count());
+            edc.IncludeElementFromBaseOrDatatype("Questionnaire.item.answerOption.value.code");
+            Assert.AreEqual(46, edc.Elements.Count());
         }
 
         void ScanNDJsonContent()
